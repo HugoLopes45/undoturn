@@ -509,7 +509,7 @@ Add `--json` to `list`, `show`, `diff`, `undo`, `redo`, `goto`, `revert`, `resto
 | `nothing to undo` | The history is at its start. Run `undoturn list --all` to see other branches. |
 | `kept: not stored` | UndoTurn has no copy of that file: it was too large, unreadable or cleaned up. Use Git or your backup. |
 | The app and Terminal show different histories | They use different history folders. `UNDOTURN_HOME` set in Terminal does not apply to the app. |
-| An undo was interrupted | Stop your agents, free disk space if it is full, then run the same command again. UndoTurn finishes the interrupted undo. Do not delete files in the history folder. |
+| An undo was interrupted | Stop your agents and free disk space if needed. Run `undoturn list` to finish the interrupted operation, then inspect the files before another recovery. Do not delete files in the history folder. |
 
 To report a bug, give your macOS version, `undoturn --version`, the agent, the command and its output. Remove secrets and private paths first. Do not send your history folder.
 
