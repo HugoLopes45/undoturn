@@ -206,8 +206,8 @@ private struct SimpleCommand {
 private struct CandidateCollector {
   let filter: OutsidePathFilter
   var result = OutsideCandidates()
-  private var seenPaths: Set<String> = []
-  private var seenRefused: Set<String> = []
+  var seenPaths: Set<String> = []
+  var seenRefused: Set<String> = []
 
   mutating func add(_ path: String, cwd: String) {
     guard !path.isEmpty else { return }

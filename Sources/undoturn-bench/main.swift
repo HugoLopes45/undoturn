@@ -136,7 +136,9 @@ func benchmarkHook(executable: String, root: String, turns: Int, edits: Int, ser
     fail("undoturn-bench: a recorded turn does not hold exactly \(edits) changed files")
   }
 
-  if removefile(base, nil, removefile_flags_t(REMOVEFILE_RECURSIVE)) != 0 {
+  let removed = nftw(
+    base, { entry, _, _, _ in entry.map { remove($0) } ?? -1 }, 16, FTW_DEPTH | FTW_PHYS)
+  if removed != 0 {
     fail("undoturn-bench: removing \(base) failed (errno \(errno))")
   }
   let gate: UInt64 = 50_000_000
@@ -168,7 +170,7 @@ func startService(_ executable: String, store: String, logPath: String, environm
   posix_spawn_file_actions_addopen(&actions, 1, "/dev/null", O_WRONLY, 0)
   posix_spawn_file_actions_addopen(
     &actions, 2, logPath, O_WRONLY | O_CREAT | O_TRUNC, 0o600)
-  let argv = [executable].map { strdup($0) } + [nil]
+  let argv = [executable].map { (argument: String) in strdup(argument) } + [nil]
   let envp = environment.map { strdup($0) } + [nil]
   defer {
     for pointer in argv { free(pointer) }
@@ -230,7 +232,7 @@ func runHook(_ executable: String, input: String, cwd: String, environment: [Str
   posix_spawn_file_actions_addopen(&actions, 1, "/dev/null", O_WRONLY, 0)
   posix_spawn_file_actions_addopen(&actions, 2, "/dev/null", O_WRONLY, 0)
   posix_spawn_file_actions_addchdir_np(&actions, cwd)
-  let argv = [executable, "hook", "claude"].map { strdup($0) } + [nil]
+  let argv = [executable, "hook", "claude"].map { (argument: String) in strdup(argument) } + [nil]
   let envp = environment.map { strdup($0) } + [nil]
   defer {
     for pointer in argv { free(pointer) }

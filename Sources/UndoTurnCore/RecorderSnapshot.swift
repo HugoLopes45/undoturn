@@ -27,8 +27,8 @@ struct OutsideWalker {
   let limit: Int?
   /// Real path of the UndoTurn home. The walker never enters it.
   let excluded: String
-  private var files: [OutsideWalkFile] = []
-  private var unreadableDirectories: [String] = []
+  var files: [OutsideWalkFile] = []
+  var unreadableDirectories: [String] = []
   private(set) var visitedCount = 0
 
   mutating func capture(_ path: String) throws(SystemError) -> OutsideWalkSnapshot? {

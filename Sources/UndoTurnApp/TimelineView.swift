@@ -442,11 +442,9 @@ struct TimelineView: View {
                   + (row.turn.label.map { ", label \($0)" } ?? "")
               )
               .accessibilityValue(
-                "\(spokenState(row.turn.state))"
-                  + (row.lane > 0 ? ", side branch" : "")
-                  + ", \(row.turn.agentName)"
-                  + ", \(row.turn.counts.spokenDescription), "
-                  + "\(RelativeAge.spoken(from: row.turn.time, now: now))"
+                "\(spokenState(row.turn.state))\(row.lane > 0 ? ", side branch" : ""), "
+                  + "\(row.turn.agentName), \(row.turn.counts.spokenDescription), "
+                  + RelativeAge.spoken(from: row.turn.time, now: now)
               )
             }
           }

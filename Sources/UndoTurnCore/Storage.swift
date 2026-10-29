@@ -201,11 +201,14 @@ public enum Storage {
   /// Removes `path` and its content without following symbolic links. A `path` that is already
   /// gone counts as removed: another removal deleted it first.
   private static func removeTree(_ path: String) throws(StorageError) {
-    let state = removefile_state_alloc()
-    defer { removefile_state_free(state) }
-    guard removefile(path, state, removefile_flags_t(REMOVEFILE_RECURSIVE)) == 0 || errno == ENOENT
-    else {
-      throw .system(SystemError(operation: "removefile", path: path, code: errno))
+    let removed = nftw(
+      path,
+      { entry, _, _, _ in
+        guard let entry else { return -1 }
+        return Darwin.remove(entry) == 0 || errno == ENOENT ? 0 : -1
+      }, 16, FTW_DEPTH | FTW_PHYS)
+    guard removed == 0 || errno == ENOENT else {
+      throw .system(SystemError(operation: "nftw", path: path, code: errno))
     }
   }
 }
