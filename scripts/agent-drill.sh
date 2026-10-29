@@ -1,10 +1,11 @@
 #!/bin/sh
 # Runs one destructive, shell-only turn with a live agent in a throwaway project, then checks that
-# `undoturn undo` restores every file byte for byte and that `undoturn redo` brings the turn back.
+# `undoturn undo` restores every file byte for byte and that `undoturn redo` brings the turn back,
+# then repeats both through the `undoturn mcp` undo and redo tools.
 # The project has uncommitted work, an untracked file and an ignored `.env`, which git can not restore.
 # Hooks load for this run only: your agent settings and your UndoTurn history stay unchanged.
-# For new agents, install into a temporary user/config home and record one trivial file-creation
-# turn. The original Claude/Codex drill remains a destructive undo/redo check.
+# Pi and Oh My Pi load the extension that `undoturn init` installs into a temporary home.
+# Copilot, Droid, Devin and OpenCode install the same way and only record one file-creation turn.
 #
 # Usage: scripts/agent-drill.sh claude|codex|copilot|droid|devin|opencode|pi|omp [undoturn binary]
 set -eu
@@ -63,7 +64,7 @@ fail() {
 }
 
 case $agent in
-  copilot | droid | devin | opencode | pi | omp)
+  copilot | droid | devin | opencode)
     if [ "$agent" = devin ] && ! command -v devin >/dev/null 2>&1; then
       echo "SKIP devin: CLI not installed"
       exit 0
@@ -89,19 +90,6 @@ case $agent in
       opencode)
         OPENCODE_CONFIG_DIR="$config_home/.config/opencode" \
           opencode run --model opencode/beam-free --auto "$prompt"
-        ;;
-      pi)
-        pi --print --no-session --no-extensions \
-          -e "$config_home/.pi/agent/extensions/undoturn.ts" \
-          --model opencode-go/beam-free "$prompt"
-        ;;
-      omp)
-        # omp runs follow-up turns (advisor, auto-continue) on its default role, not on --model.
-        printf 'enabledModels:\n  - opencode-go/beam-free\nmodelRoles:\n  default: opencode-go/beam-free\n' \
-          >"$config_home/omp-drill.yml"
-        omp --no-session --no-extensions --config "$config_home/omp-drill.yml" \
-          -e "$config_home/.omp/agent/extensions/undoturn.ts" \
-          --model opencode-go/beam-free --auto-approve -p "$prompt"
         ;;
     esac
     [ -f "$project/drill.txt" ] || fail "agent did not create drill.txt"
@@ -151,6 +139,20 @@ EOF
       -c "hooks.PreToolUse=[{matcher=\"Bash\",hooks=[{type=\"command\",command=\"$hook\"}]}]" \
       "$prompt"
     ;;
+  pi)
+    HOME="$root/pi-home" "$bin" init --agent pi >/dev/null
+    pi --print --no-session --no-extensions -e "$root/pi-home/.pi/agent/extensions/undoturn.ts" \
+      --model opencode-go/beam-free "$prompt"
+    ;;
+  omp)
+    HOME="$root/omp-home" "$bin" init --agent omp >/dev/null
+    # omp runs follow-up turns (advisor, auto-continue) on its default role, not on --model.
+    printf 'enabledModels:\n  - opencode-go/beam-free\nmodelRoles:\n  default: opencode-go/beam-free\n' \
+      >"$root/omp-drill.yml"
+    omp --no-session --no-extensions --config "$root/omp-drill.yml" \
+      -e "$root/omp-home/.omp/agent/extensions/undoturn.ts" \
+      --model opencode-go/beam-free --auto-approve -p "$prompt"
+    ;;
 esac
 
 # A failed step stops the `&&` chain, and a partial turn would still pass the undo check.
@@ -162,4 +164,12 @@ after=$(digest)
 [ "$(digest)" = "$before" ] || fail "undo did not restore the files from before the turn"
 "$bin" redo >/dev/null
 [ "$(digest)" = "$after" ] || fail "redo did not bring back the files of the turn"
-echo "PASS $agent: undo restored all files ($before), redo brought the turn back ($after)"
+mcp() {
+  printf '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"%s","arguments":{}}}\n' "$1" |
+    "$bin" mcp
+}
+mcp undo
+[ "$(digest)" = "$before" ] || fail "MCP undo did not restore the files from before the turn"
+mcp redo
+[ "$(digest)" = "$after" ] || fail "MCP redo did not bring back the files of the turn"
+echo "PASS $agent: CLI and MCP undo restored all files ($before), redo brought the turn back ($after)"

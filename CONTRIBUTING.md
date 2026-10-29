@@ -46,7 +46,7 @@ To build a local app, run `sh scripts/build-app.sh .build/UndoTurn-local.app`. T
 - One topic per pull request. Keep it small.
 - The subject says what changes. The body says why.
 - CI must pass: build, tests and format lint.
-- If you change hook handling, also run `scripts/agent-drill.sh claude` and `scripts/agent-drill.sh codex`. Each runs one short turn with your agent login and checks undo and redo.
+- If you change hook handling, also run `scripts/agent-drill.sh` with `claude`, `codex`, `pi` and `omp`. Each runs one short turn with your agent login and checks undo and redo through the CLI and the MCP server.
 - Add a line to `CHANGELOG.md` under `Unreleased` for user-visible changes. See [Changelog](#changelog).
 - If you change `docs/GUIDE.md`, run `sh scripts/build-docs.sh` and commit `docs/guide.html` with it. The script needs pandoc 3.8 or later.
 
