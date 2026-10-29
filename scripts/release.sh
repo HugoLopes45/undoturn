@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds, signs, notarizes and staples the release artifacts into .build/release/<version>.
+# Builds, signs, notarizes and staples the release artifacts into .build/release-artifacts/<version>.
 # Publishes nothing. Requires a clean work tree and:
 #   UNDOTURN_SIGN_IDENTITY  a "Developer ID Application: …" identity in the keychain
 #   UNDOTURN_NOTARY_PROFILE a profile saved with `xcrun notarytool store-credentials`
@@ -8,23 +8,27 @@ cd "$(dirname "$0")/.."
 
 : "${UNDOTURN_SIGN_IDENTITY:?set UNDOTURN_SIGN_IDENTITY to a Developer ID Application identity}"
 : "${UNDOTURN_NOTARY_PROFILE:?set UNDOTURN_NOTARY_PROFILE to a notarytool keychain profile}"
-case "$UNDOTURN_SIGN_IDENTITY" in
-  "Developer ID Application:"* | [0-9A-F][0-9A-F][0-9A-F][0-9A-F]*) ;;
-  *) echo "UNDOTURN_SIGN_IDENTITY must be a Developer ID Application identity or its SHA-1" >&2; exit 2 ;;
-esac
-if ! security find-identity -v -p codesigning | grep -Fq "$UNDOTURN_SIGN_IDENTITY"; then
-  echo "no valid code signing identity matches: $UNDOTURN_SIGN_IDENTITY" >&2
+identities=$(security find-identity -v -p codesigning)
+# Lines read `  1) <40-hex SHA-1> "<name>"`; the identity must equal a name or a SHA-1 exactly.
+if ! printf '%s\n' "$identities" | awk -v wanted="$UNDOTURN_SIGN_IDENTITY" '
+  $2 ~ /^[0-9A-F]+$/ && length($2) == 40 {
+    name = substr($0, index($0, "\"") + 1); sub(/"[^"]*$/, "", name)
+    if (name ~ /^Developer ID Application: / && (wanted == name || wanted == $2)) found = 1
+  }
+  END { exit !found }'; then
+  echo "no valid Developer ID Application identity is named or has the SHA-1: $UNDOTURN_SIGN_IDENTITY" >&2
   exit 1
 fi
 version=$(sed -n 's/.*current = "\([^"]*\)".*/\1/p' Sources/UndoTurnCore/UndoTurnVersion.swift)
 case "$version" in
   *-dev*) echo "refusing to release development version $version" >&2; exit 1 ;;
 esac
-if [ -n "$(git status --porcelain)" ]; then
+changes=$(git status --porcelain)
+if [ -n "$changes" ]; then
   echo "work tree has uncommitted changes; release from a clean commit" >&2
   exit 1
 fi
-dist="$PWD/.build/release/$version"
+dist="$PWD/.build/release-artifacts/$version"
 if [ -e "$dist" ]; then
   echo "release output already exists: $dist" >&2
   exit 1
@@ -33,8 +37,12 @@ mkdir -p "$dist"
 work=$(mktemp -d "$PWD/.build/UndoTurn-release.XXXXXX")
 
 notarize() {
-  result=$(xcrun notarytool submit "$1" --keychain-profile "$UNDOTURN_NOTARY_PROFILE" --wait \
-    --output-format json)
+  if ! result=$(xcrun notarytool submit "$1" --keychain-profile "$UNDOTURN_NOTARY_PROFILE" --wait \
+    --output-format json); then
+    printf '%s\n' "$result" >&2
+    echo "notarytool could not submit $1" >&2
+    exit 1
+  fi
   printf '%s\n' "$result"
   status=$(printf '%s' "$result" | plutil -extract status raw -o - -)
   if [ "$status" != Accepted ]; then

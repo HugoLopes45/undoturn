@@ -70,8 +70,8 @@ jobs:
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
-            .build/release/${{ steps.version.outputs.version }}/UndoTurn-*.dmg
-            .build/release/${{ steps.version.outputs.version }}/undoturn-*.tar.gz
+            .build/release-artifacts/${{ steps.version.outputs.version }}/UndoTurn-*.dmg
+            .build/release-artifacts/${{ steps.version.outputs.version }}/undoturn-*.tar.gz
       - name: Draft the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -79,7 +79,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           awk -v v="$VERSION" '$0 ~ "^## \\[" v "\\]" { on = 1; next } on && /^## / { exit } on' CHANGELOG.md >"$RUNNER_TEMP/notes.md"
-          dist=".build/release/$VERSION"
+          dist=".build/release-artifacts/$VERSION"
           # Stable names keep the README links to releases/latest/download/ valid for every version.
           cp "$dist/UndoTurn-$VERSION.dmg" "$dist/UndoTurn.dmg"
           cp "$dist/undoturn-$VERSION-macos-universal.tar.gz" "$dist/undoturn-macos-universal.tar.gz"
