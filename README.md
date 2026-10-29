@@ -16,16 +16,20 @@
 ![Agents](https://img.shields.io/badge/agents-10%20CLIs-d97757)
 ![Network](https://img.shields.io/badge/network-none-38d591)
 [![License](https://img.shields.io/badge/license-Apache%202.0-1084fe)](LICENSE)
-![Status](https://img.shields.io/badge/status-pre--release-orange)
 [![PRs](https://img.shields.io/badge/PRs-welcome-38d591)](CONTRIBUTING.md)
+[![Release](https://img.shields.io/github/v/release/HugoLopes45/undoturn?label=release&color=1084fe&cacheSeconds=300)](https://github.com/HugoLopes45/undoturn/releases/latest)
 
 <br>
 
-<a href="#quick-start">
-  <img src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F%20%20Build%20from%20source-macOS%2014%2B-1084fe?style=for-the-badge&labelColor=070707" alt="Build UndoTurn from source for macOS 14 or later" height="40">
+<a href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">
+  <img src="https://img.shields.io/github/v/release/HugoLopes45/undoturn?style=for-the-badge&label=%E2%AC%87%EF%B8%8F%20%20Download%20for%20Mac&labelColor=070707&color=1084fe&cacheSeconds=300" alt="Download the latest UndoTurn for Mac (.dmg)" height="40">
+</a>
+&nbsp;
+<a href="https://github.com/HugoLopes45/undoturn/releases/latest/download/undoturn-macos-universal.tar.gz">
+  <img src="https://img.shields.io/github/v/release/HugoLopes45/undoturn?style=for-the-badge&label=%E2%AC%87%EF%B8%8F%20%20CLI%20only&labelColor=070707&color=2a9d8f&cacheSeconds=300" alt="Download the latest UndoTurn command-line tools (.tar.gz)" height="40">
 </a>
 
-<sub>No published release yet &nbsp;·&nbsp; CLI, menu bar app and background service</sub>
+<sub>macOS 14 or later &nbsp;·&nbsp; universal: Apple silicon and Intel &nbsp;·&nbsp; signed and notarized &nbsp;·&nbsp; [all releases](https://github.com/HugoLopes45/undoturn/releases)</sub>
 
 <br>
 <br>
@@ -39,7 +43,7 @@
 
 ---
 
-> **Status: pre-release.** Recording, undo and the menu bar app support Claude Code, Codex CLI, Gemini CLI, Cursor CLI, GitHub Copilot CLI, Factory Droid, Devin CLI, OpenCode, Pi and Oh My Pi. There is no published release yet: [build from source](#quick-start).
+> **Status: early (0.x).** Recording, undo and the menu bar app support Claude Code, Codex CLI, Gemini CLI, Cursor CLI, GitHub Copilot CLI, Factory Droid, Devin CLI, OpenCode, Pi and Oh My Pi. Commands and storage can change before 1.0. [Download the latest release](#quick-start).
 
 ## Why
 
@@ -175,7 +179,33 @@ Agents with "Yes" for files outside the project also report each command and fil
 
 ## Quick start
 
-Requirements: macOS 14 or later, and Xcode 26 or the Swift 6.2 toolchain to build.
+Requirements: macOS 14 or later.
+
+| | Download | Install |
+|---|---|---|
+| **App** (menu bar app, CLI and service) | [UndoTurn.dmg](https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg) | Open the DMG and drag **UndoTurn** to **Applications**. The CLI is at `/Applications/UndoTurn.app/Contents/Helpers/undoturn`. |
+| **CLI only** (CLI and service) | [undoturn-macos-universal.tar.gz](https://github.com/HugoLopes45/undoturn/releases/latest/download/undoturn-macos-universal.tar.gz) | See the commands below. |
+
+Both downloads are universal (Apple silicon and Intel), signed with a Developer ID and notarized by Apple. Each release has a `SHA256SUMS` file and a GitHub build provenance attestation.
+
+To install the CLI only:
+
+```sh
+curl -fLO https://github.com/HugoLopes45/undoturn/releases/latest/download/undoturn-macos-universal.tar.gz
+curl -fLO https://github.com/HugoLopes45/undoturn/releases/latest/download/SHA256SUMS
+shasum -a 256 -c SHA256SUMS --ignore-missing
+gh attestation verify undoturn-macos-universal.tar.gz --repo HugoLopes45/undoturn  # optional
+tar -xzf undoturn-macos-universal.tar.gz
+mkdir -p ~/.local/bin
+cp undoturn-*-macos-universal/undoturn undoturn-*-macos-universal/undoturn-service ~/.local/bin/
+```
+
+Hooks store the absolute path of the CLI. Install it in a stable location before `init`, and keep `undoturn-service` beside it.
+
+<details>
+<summary>Build from source</summary>
+
+Requirements: Xcode 26 or the Swift 6.2 toolchain.
 
 ```sh
 git clone https://github.com/HugoLopes45/undoturn.git
@@ -184,6 +214,10 @@ swift build -c release
 mkdir -p ~/.local/bin
 cp .build/release/undoturn .build/release/undoturn-service ~/.local/bin/
 ```
+
+To build a local app installer: `sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg`. The app and bundled helpers are universal and ad-hoc signed; the DMG is unsigned and not notarized. Use a fresh output path for another build.
+
+</details>
 
 Before `init`, read [Before you record](docs/GUIDE.md#before-you-record). In short: `init` installs hooks for all ten agents in your user account, and `.env*` files are recorded unless `.undoturnignore` excludes them. To install one agent only, use `init --agent <name>`. To try undo and redo first without hooks, follow [Your first undo and redo](docs/GUIDE.md#your-first-undo-and-redo).
 
@@ -216,7 +250,7 @@ undoturn undo
 
 ### The menu bar app
 
-Build a local installer with `sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg`, then copy its app to `/Applications`. The package includes the CLI and service helpers. The app and bundled helpers are universal and ad-hoc signed; the DMG is unsigned. These local artifacts are not notarized or a public release. Signed, notarized artifacts come from `scripts/release.sh`. Use a fresh output path for another build. The CLI and app use the same engine and history.
+The app bundles the CLI and the service. The CLI and the app use the same engine and history.
 
 On an empty timeline, choose **Install Agent Hooks…** to select a project. Setup uses the bundled CLI, not your shell's `PATH`.
 

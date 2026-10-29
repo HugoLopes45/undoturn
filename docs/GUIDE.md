@@ -61,11 +61,30 @@ At a recording boundary, UndoTurn observes changes since the previous boundary. 
 
 The SDK requirement is for building the app, not a macOS 26 runtime requirement. The app and the CLI archive are universal (arm64 and x86_64).
 
-### Install a local DMG
+### Download a release
 
-These steps assume a trusted builder has **already supplied a local `UndoTurn-….dmg` file**, or you made one from this checkout. There is no release download URL in this guide.
+Each [release](https://github.com/HugoLopes45/undoturn/releases) has:
 
-1. Confirm who built the image and that it is intended for your Mac. If a `.sha256` file was supplied, compare it with the DMG before opening it. A checksum checks bytes; it does not establish the builder's identity.
+| File | Contents |
+|---|---|
+| `UndoTurn.dmg` | The menu bar app, with the CLI and the service in `Contents/Helpers` |
+| `undoturn-macos-universal.tar.gz` | The CLI and the service only |
+| `SHA256SUMS` | The SHA-256 of each file |
+
+The files are universal, signed with a Developer ID and notarized by Apple. Each file also has a [build provenance attestation](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations). To check a download:
+
+```sh
+shasum -a 256 -c SHA256SUMS --ignore-missing
+gh attestation verify UndoTurn.dmg --repo HugoLopes45/undoturn
+```
+
+Then install the DMG as described below, or extract the archive and copy `undoturn` and `undoturn-service` to the same stable folder, for example `~/.local/bin`.
+
+### Install a DMG
+
+These steps apply to a release `UndoTurn.dmg` and to a local `UndoTurn-….dmg` that you built from this checkout or that a trusted builder supplied.
+
+1. For a local DMG, confirm who built the image and that it is intended for your Mac. If a `.sha256` file was supplied, compare it with the DMG before opening it. A checksum checks bytes; it does not establish the builder's identity.
 2. Open the DMG in Finder. Drag **UndoTurn.app** to **Applications**.
 3. Eject the image. Launch `/Applications/UndoTurn.app`, not the copy still on the mounted image.
 4. Look for UndoTurn in the macOS menu bar. **It has no Dock icon while its timeline is closed.** On a first launch with no projects, the app opens the empty timeline; reopening the installed app also opens the timeline. While the timeline is open, UndoTurn also shows in the Dock.

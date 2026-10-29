@@ -170,10 +170,40 @@ secrets/
 </table>
 </div>
 <p>The SDK requirement is for building the app, not a macOS 26 runtime requirement. The app and the CLI archive are universal (arm64 and x86_64).</p>
-<h3 id="install-a-local-dmg"><a href="#install-a-local-dmg">Install a local DMG</a></h3>
-<p>These steps assume a trusted builder has <strong>already supplied a local <code>UndoTurn-….dmg</code> file</strong>, or you made one from this checkout. There is no release download URL in this guide.</p>
+<h3 id="download-a-release"><a href="#download-a-release">Download a release</a></h3>
+<p>Each <a href="https://github.com/HugoLopes45/undoturn/releases">release</a> has:</p>
+<div class="table-scroll" tabindex="0">
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UndoTurn.dmg</code></td>
+<td>The menu bar app, with the CLI and the service in <code>Contents/Helpers</code></td>
+</tr>
+<tr>
+<td><code>undoturn-macos-universal.tar.gz</code></td>
+<td>The CLI and the service only</td>
+</tr>
+<tr>
+<td><code>SHA256SUMS</code></td>
+<td>The SHA-256 of each file</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The files are universal, signed with a Developer ID and notarized by Apple. Each file also has a <a href="https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations">build provenance attestation</a>. To check a download:</p>
+<pre class="sh" tabindex="0"><code>shasum -a 256 -c SHA256SUMS --ignore-missing
+gh attestation verify UndoTurn.dmg --repo HugoLopes45/undoturn</code></pre>
+<p>Then install the DMG as described below, or extract the archive and copy <code>undoturn</code> and <code>undoturn-service</code> to the same stable folder, for example <code>~/.local/bin</code>.</p>
+<h3 id="install-a-dmg"><a href="#install-a-dmg">Install a DMG</a></h3>
+<p>These steps apply to a release <code>UndoTurn.dmg</code> and to a local <code>UndoTurn-….dmg</code> that you built from this checkout or that a trusted builder supplied.</p>
 <ol type="1">
-<li>Confirm who built the image and that it is intended for your Mac. If a <code>.sha256</code> file was supplied, compare it with the DMG before opening it. A checksum checks bytes; it does not establish the builder's identity.</li>
+<li>For a local DMG, confirm who built the image and that it is intended for your Mac. If a <code>.sha256</code> file was supplied, compare it with the DMG before opening it. A checksum checks bytes; it does not establish the builder's identity.</li>
 <li>Open the DMG in Finder. Drag <strong>UndoTurn.app</strong> to <strong>Applications</strong>.</li>
 <li>Eject the image. Launch <code>/Applications/UndoTurn.app</code>, not the copy still on the mounted image.</li>
 <li>Look for UndoTurn in the macOS menu bar. <strong>It has no Dock icon while its timeline is closed.</strong> On a first launch with no projects, the app opens the empty timeline; reopening the installed app also opens the timeline. While the timeline is open, UndoTurn also shows in the Dock.</li>

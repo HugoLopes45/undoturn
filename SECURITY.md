@@ -11,7 +11,7 @@ You get a first answer within 7 days.
 
 ## Supported versions
 
-UndoTurn has no release yet. Fixes go to the `main` branch. After the first release, only the latest release receives fixes.
+Only the latest release receives fixes. Fixes go to the `main` branch first.
 
 ## In scope
 
