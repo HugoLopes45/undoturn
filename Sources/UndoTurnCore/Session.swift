@@ -259,9 +259,15 @@ public struct Session: Sendable {
   public func checkpoint(time: Int64) throws(SessionError) -> NodeID? {
     let lock = try lock()
     try recover(time: time, lock: lock)
-    return try Self.recording { () throws(RecorderError) in
+    let live = try summary().pendingTurn.flatMap { workspace.readLive(turn: $0.time) }
+    let node = try Self.recording { () throws(RecorderError) in
       try Recorder(workspace: workspace).checkpoint(time: time, lock: lock)
     }
+    // The turn goes on under the checkpoint's time, and the live state is keyed by that time.
+    if let live, let pending = try summary().pendingTurn {
+      try updateLive(LiveTurn(turn: pending.time, tool: live.tool, attention: live.attention))
+    }
+    return node
   }
 
   public func state(time: Int64) throws(SessionError) -> HistoryState {

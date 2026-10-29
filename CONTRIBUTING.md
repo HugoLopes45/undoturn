@@ -46,7 +46,7 @@ To build a local app, run `sh scripts/build-app.sh .build/UndoTurn-local.app`. T
 - One topic per pull request. Keep it small.
 - The subject says what changes. The body says why.
 - CI must pass: build, tests and format lint.
-- If you change hook handling, also run `scripts/agent-drill.sh claude` and `scripts/agent-drill.sh codex`. Each runs one short turn with your agent login and checks undo and redo.
+- If you change hook handling, also run `scripts/agent-drill.sh` with `claude`, `codex`, `pi` and `omp`. Each runs two short turns with your agent login. It checks undo and redo through the CLI, and an undo that the agent calls through the MCP server.
 - Add a line to `CHANGELOG.md` under `Unreleased` for user-visible changes. See [Changelog](#changelog).
 - If you change `docs/GUIDE.md`, run `sh scripts/build-docs.sh` and commit `docs/guide.html` with it. The script needs pandoc 3.8 or later.
 
@@ -76,7 +76,7 @@ For maintainers:
    sh scripts/release.sh
    ```
 
-5. Check `SHA256SUMS` in `.build/release-artifacts/X.Y.Z`, install the DMG and exercise the app and bundled CLI. The three release assets are `UndoTurn.dmg`, `undoturn-macos-universal.tar.gz` and `SHA256SUMS`. Keep binaries out of Git history.
+5. Check `SHA256SUMS` in `.build/release-artifacts/X.Y.Z`, install the DMG and exercise the app and bundled CLI. Run `swift scripts/test-about.swift /Applications/UndoTurn.app`; it opens About UndoTurn and checks the author and GitHub link. The three release assets are `UndoTurn.dmg`, `undoturn-macos-universal.tar.gz` and `SHA256SUMS`. Keep binaries out of Git history.
 6. Tag the validated commit: `git tag -a vX.Y.Z -m "UndoTurn X.Y.Z"`, then `git push origin main vX.Y.Z`.
 7. Create a draft with the changelog notes and the three files:
 

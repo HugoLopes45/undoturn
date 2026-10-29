@@ -163,7 +163,7 @@ UndoTurn does not record ignored files, except `.env*` files, which it records u
 
 Agents with "Yes" for files outside the project also report each command and file edit. While a turn runs, the menu, the timeline and `undoturn list` show the newest one. Claude Code also reports when it waits for your permission or answer.
 
-[`scripts/agent-drill.sh`](scripts/agent-drill.sh) includes a destructive undo/redo check for Claude Code and Codex CLI, plus a one-file recording check for Copilot, Droid, Devin, OpenCode, Pi and Oh My Pi. Each new-agent run uses a temporary UndoTurn store and temporary hook configuration where the CLI supports it.
+[`scripts/agent-drill.sh`](scripts/agent-drill.sh) includes a destructive undo/redo check through the CLI, and an undo that the agent calls through the MCP server, for Claude Code, Codex CLI, Pi and Oh My Pi, plus a one-file recording check for Copilot, Droid, Devin and OpenCode. Each new-agent run uses a temporary UndoTurn store and temporary hook configuration where the CLI supports it.
 
 ## Quick start
 
