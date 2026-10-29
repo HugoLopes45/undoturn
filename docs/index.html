@@ -3,17 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>UndoTurn: undo for coding agents on macOS</title>
-<meta name="description" content="UndoTurn records your files at each coding-agent prompt and puts them back with one command or one click. For Claude Code, Codex CLI and eight other agent CLIs, on macOS.">
+<title>UndoTurn: undo AI coding agent changes on Mac</title>
+<meta name="description" content="UndoTurn saves your files at every prompt to Claude Code, Codex, Gemini, Cursor and 6 other AI coding agents. Undo a bad prompt in one click. Free, open source, local, for macOS.">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#ffffff">
-<meta property="og:title" content="UndoTurn: local history for coding agents">
-<meta property="og:description" content="Undo for coding agents on macOS. One command. One click.">
+<meta property="og:site_name" content="UndoTurn">
+<meta property="og:title" content="UndoTurn: undo AI coding agent changes on Mac">
+<meta property="og:description" content="Every prompt to Claude Code, Codex or another AI coding agent is a save point. Undo a bad one in one click. Local, free, open source.">
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://hugolopes45.github.io/undoturn/">
 <meta property="og:url" content="https://hugolopes45.github.io/undoturn/">
 <meta property="og:image" content="https://hugolopes45.github.io/undoturn/images/timeline-light.png">
+<meta property="og:image:alt" content="The UndoTurn timeline: each agent prompt is a turn, with its changed files and a line diff">
 <meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "UndoTurn",
+  "description": "UndoTurn saves your files at every prompt to Claude Code, Codex, Gemini, Cursor and 6 other AI coding agents. Undo a bad prompt in one click.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS 14 or later",
+  "url": "https://hugolopes45.github.io/undoturn/",
+  "downloadUrl": "https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg",
+  "image": "https://hugolopes45.github.io/undoturn/images/timeline-light.png",
+  "license": "https://www.apache.org/licenses/LICENSE-2.0",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
 <link rel="icon" href="images/icon.svg" type="image/svg+xml">
 <script>document.documentElement.classList.add('js')</script>
 <style>
@@ -135,17 +152,17 @@ html:not(.js) .reel__window { overflow-x: auto; }
   .reel { --sliver: 32px; --gap: 16px; }
 }
 @media (min-width: 75em) {
-  .hero__stage { height: 100svh; min-height: 640px; grid-template-columns: minmax(0, 0.9fr) var(--reel) minmax(0, 1fr); grid-template-rows: auto 1fr auto; column-gap: var(--gutter); row-gap: 0; padding-bottom: 32px; --reel: clamp(480px, min(46vw, (100svh - 360px) * 4 / 3 + 112px), 800px); }
+  .hero__stage { height: 100svh; min-height: 640px; grid-template-columns: minmax(0, 0.9fr) var(--reel) minmax(0, 1fr); grid-template-rows: auto 1fr auto; column-gap: var(--gutter); row-gap: 0; padding-bottom: 32px; container-type: inline-size; --reel: clamp(480px, min(46vw, (100svh - 360px) * 4 / 3 + 112px), 800px); }
   .nav { grid-column: 1 / -1; }
-  .hero__title { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: subgrid; align-self: center; font-size: clamp(2.75rem, 5vw - 1rem, 4.5rem); }
-  .half--a { grid-column: 1; grid-row: 1; justify-self: start; }
-  .half--b { grid-column: 3; grid-row: 1; justify-self: end; }
+  .hero__title { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: subgrid; align-self: center; font-size: min(clamp(2.75rem, 5vw - 1rem, 4.5rem), (100cqw - var(--reel) - 2 * var(--gutter)) / 1.9 / 6.3); }
+  .half--a { grid-column: 1; grid-row: 1; justify-self: end; }
+  .half--b { grid-column: 3; grid-row: 1; justify-self: start; }
   .reel { grid-column: 2; grid-row: 2; align-self: center; position: relative; z-index: 2; margin-inline: 0; overflow: visible; --sliver: 40px; --gap: 16px; --fw: calc(var(--reel) - 2 * (var(--sliver) + var(--gap))); }
   .reel__window { overflow: clip; }
   .reel__track { padding-inline: calc(var(--sliver) + var(--gap)); }
-  .reel__foot { position: absolute; top: 100%; left: 0; right: 0; padding-inline: calc(var(--sliver) + var(--gap)); }
-  .hero__act { grid-column: 1; grid-row: 3; align-self: end; }
-  .hero__sentence { font-size: 24px; }
+  .reel__foot { padding-inline: calc(var(--sliver) + var(--gap)); }
+  .hero__act { grid-column: 1 / -1; grid-row: 3; align-items: center; text-align: center; }
+  .hero__sentence { font-size: 24px; max-width: 46ch; }
 }
 @media (min-width: 75em) and (prefers-reduced-motion: no-preference) {
   .js .hero { height: 240svh; }
@@ -387,7 +404,7 @@ html:not(.js) .reel__window { overflow-x: auto; }
 .cta__copy:active { transform: scale(0.96); }
 .cta__links { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; font-size: 18px; }
 .cta__links a { text-decoration-line: underline; }
-.cta__links a:focus-visible { outline-color: var(--accent-ink); }
+.cta__tile a:focus-visible { outline-color: var(--accent-ink); }
 .cta__side { display: none; position: relative; border-radius: var(--radius); min-height: 360px; overflow: hidden; }
 .cta__side img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: none; object-position: -490px -60px; }
 @media (hover: hover) and (pointer: fine) { .cta__copy:hover { background: #333333; } }
@@ -462,8 +479,8 @@ html:not(.js) .reel__window { overflow-x: auto; }
     </nav>
 
     <h1 class="hero__title lines">
-      <span class="line half half--a"><span data-line style="--i:0">Agent changes.</span></span>
-      <span class="line half half--b"><span data-line style="--i:1">A local history.</span></span>
+      <span class="line half half--a"><span data-line style="--i:0">Undo for</span></span>
+      <span class="line half half--b"><span data-line style="--i:1">coding agents.</span></span>
     </h1>
 
     <div class="reel" data-open role="region" aria-roledescription="carousel" aria-label="UndoTurn at work" tabindex="-1">
@@ -547,7 +564,7 @@ restored: tests/items.test.ts
     </div>
 
     <div class="hero__act" data-load style="--d:440ms">
-      <p class="hero__sentence lead">Undo for coding agents on macOS. UndoTurn records filesystem changes across prompts. Concurrent sessions share an interval; recovery keeps conflicting edits.</p>
+      <p class="hero__sentence lead">UndoTurn saves your files at every prompt to Claude Code, Codex and 8 other agents. Each prompt is a turn, and you can undo it in one click. Nothing leaves your Mac.</p>
       <a class="button" href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">Download for Mac</a>
     </div>
   </div>
@@ -562,15 +579,15 @@ restored: tests/items.test.ts
       <ol class="steps">
         <li class="step is-active" data-step="1">
           <p class="step__s" data-reveal style="--i:1">You send a prompt. UndoTurn records the files.</p>
-          <p class="step__t" data-reveal style="--i:2">The hook stores what changed since the last turn. It follows <code>.gitignore</code>, but it still records <code>.env</code> files unless <code>.undoturnignore</code> excludes them.</p>
+          <p class="step__t" data-reveal style="--i:2">A hook in the agent saves what changed since the last prompt. It skips files that <code>.gitignore</code> ignores, except <code>.env</code> files. To skip those too, list them in <code>.undoturnignore</code>.</p>
         </li>
         <li class="step" data-step="2">
           <p class="step__s">The agent runs rm, mv and sed&nbsp;-i.</p>
-          <p class="step__t">UndoTurn compares the files themselves, not the tool log of the agent. A change from a shell command is undone like any edit.</p>
+          <p class="step__t">UndoTurn looks at the files on disk, not at what the agent says it did. It undoes a shell command like any other edit.</p>
         </li>
         <li class="step" data-step="3">
           <p class="step__s">You undo. The files come back.</p>
-          <p class="step__t">A durable journal resumes interrupted recovery and records completed operations. Filesystem changes and journal progress are not atomic against other writers.</p>
+          <p class="step__t">If an undo stops halfway, UndoTurn finishes it the next time. Another program that writes files during an undo can still conflict with it.</p>
         </li>
       </ol>
     </div>
@@ -604,7 +621,7 @@ restored: tests/items.test.ts
                 <p class="files-h">Move the API client into src/api</p>
                 <p class="meta">Claude Code &middot; started just now</p>
                 <dl class="grid2" data-s-latest style="margin-top:0.5em"><dt>Latest step</dt><dd><code data-s-latest-code>$ mv src/client.ts src/api/client.ts</code></dd></dl>
-                <p class="note" style="margin-top:0.5em">UndoTurn records the shared interval when all active participants stop. Files are not attributed per session.</p>
+                <p class="note" style="margin-top:0.5em">When several agents work at the same time, UndoTurn records one shared turn after they all stop. It does not show which agent changed which file.</p>
               </div>
               <div data-s-undone-detail class="is-hidden">
                 <p class="files-h">Move the API client into src/api</p>
@@ -631,7 +648,7 @@ restored: tests/items.test.ts
       <h2 id="app-h" data-reveal>Inside the app</h2>
       <div class="showcase__now" aria-live="polite" data-reveal style="--i:1">
         <p class="showcase__name" data-sc-name>Every turn, in order</p>
-        <p class="showcase__text" data-sc-text>Recorded intervals form a tree. The blue mark shows the current history position.</p>
+        <p class="showcase__text" data-sc-text>Each row is one prompt and the files it changed. The blue mark shows where your project is now.</p>
       </div>
       <div class="showcase__controls no-js-hide" data-reveal style="--i:2">
         <button type="button" class="ctl" data-sc="-1" aria-label="Previous panel">Previous</button>
@@ -644,7 +661,7 @@ restored: tests/items.test.ts
         <li class="panel is-lit">
           <figure>
             <span class="crop" style="--w:600;--h:430"><img src="images/timeline-dark.png" srcset="images/timeline-dark.png 2x" width="1200" height="760" alt="The Projects sidebar and five turns of a web app: numbers, prompts, agents, counts and ages" loading="lazy"></span>
-            <figcaption><strong>Every turn, in order</strong>Recorded intervals form a tree. The blue mark shows the current history position.</figcaption>
+            <figcaption><strong>Every turn, in order</strong>Each row is one prompt and the files it changed. The blue mark shows where your project is now.</figcaption>
           </figure>
         </li>
         <li class="panel">
@@ -656,7 +673,7 @@ restored: tests/items.test.ts
         <li class="panel">
           <figure>
             <span class="crop" style="--w:598;--h:196;--x:602;--y:52"><img src="images/restore-dark.png" srcset="images/restore-dark.png 2x" width="1200" height="760" alt="Turn 1 selected with a Go to #1 button: undoes 3 turns, restores 3 files; below, Revert Just This Turn and Restore File or Folder" loading="lazy"></span>
-            <figcaption><strong>Any turn, one click</strong>History navigation previews the move before applying it.</figcaption>
+            <figcaption><strong>Any turn, one click</strong>Pick a turn. Before any file moves, UndoTurn shows how many turns and files will change.</figcaption>
           </figure>
         </li>
         <li class="panel">
@@ -703,7 +720,7 @@ restored: src/List.tsx
     </div>
 
     <div class="menu-sec__panel" data-reveal style="--i:1">
-      <div class="menu" data-ui id="menu-ui" role="img" aria-label="The UndoTurn menu: a running turn in web-app, Undo #5, Redo, the four latest turns, Open Timeline, Manage Storage, Install Agent Hooks, Check Recording Setup, Pause Recording, Open at Login, About and Quit">
+      <div class="menu" data-ui id="menu-ui" role="img" aria-label="The UndoTurn menu: a running turn in web-app, Undo #5, Redo, the four latest turns, Open Timeline, Manage Storage, Install Agent Hooks, Check Recording Setup, Install Command-Line Tools, Pause Recording, Open at Login, About and Quit">
         <div class="m-part" data-part="project">
           <p class="m-head">web-app</p>
         </div>
@@ -726,6 +743,7 @@ restored: src/List.tsx
           <div class="m-item"><span class="t">Manage Storage…</span></div>
           <div class="m-item"><span class="t">Install Agent Hooks…</span></div>
           <div class="m-item"><span class="t">Check Recording Setup…</span></div>
+          <div class="m-item"><span class="t">Install Command-Line Tools…</span></div>
         </div>
         <div class="m-part" data-part="pause">
           <div class="m-item"><span class="t">Pause Recording</span></div>
@@ -764,9 +782,9 @@ restored: src/List.tsx
       <h3>Go back</h3>
       <div class="band"><code>undoturn undo</code><p>Put back the files from before the last turn.</p><p class="band__app">⌘Z in the timeline</p></div>
       <div class="band"><code>undoturn redo</code><p>Apply the undone turn again.</p><p class="band__app">⇧⌘Z in the timeline</p></div>
-      <div class="band"><code>undoturn goto 2</code><p>Move the project to turn 2, also on another branch.</p><p class="band__app">Go to #2</p></div>
-      <div class="band"><code>undoturn revert 2</code><p>Reverse one recorded turn while keeping later conflicting edits.</p><p class="band__app">Revert Just This Turn…</p></div>
-      <div class="band"><code>undoturn restore src --at 2 --after</code><p>Restore recorded folder versions without moving history.</p><p class="band__app">Restore File or Folder…</p></div>
+      <div class="band"><code>undoturn goto 2</code><p>Move the project to turn 2, even on a side branch.</p><p class="band__app">Go to #2</p></div>
+      <div class="band"><code>undoturn revert 2</code><p>Undo only turn 2. Files changed again later keep their newer version.</p><p class="band__app">Revert Just This Turn…</p></div>
+      <div class="band"><code>undoturn restore src --at 2 --after</code><p>Bring back <code>src</code> as it was after turn 2. Nothing else changes.</p><p class="band__app">Restore File or Folder…</p></div>
       <div class="band"><code>undoturn list</code><p>Show the turns, newest first. <code>*</code> marks the current turn.</p><p class="band__app">The timeline</p></div>
     </div>
     <div class="bands" role="tabpanel" id="panel-look" aria-labelledby="tab-look">
@@ -809,7 +827,8 @@ restored: src/List.tsx
   <div class="wrap grid cta__grid">
     <div class="cta__tile" data-reveal>
       <h2 id="cta-h">Download UndoTurn</h2>
-      <p>UndoTurn needs macOS 14 or later. <a class="link-plain" href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">Download the app</a>, universal, signed and notarized, or the CLI only from the <a class="link-plain" href="https://github.com/HugoLopes45/undoturn/releases/latest">latest release</a>. To build from source instead, clone the repository. Then, in the app, choose <strong>Install Agent Hooks…</strong> in the menu bar and select your project. With the CLI, run <code>undoturn init</code> in your project. Both add the hooks to all supported agents and register the project. In Codex, run <code>/hooks</code> once to trust the hook. <code>undoturn uninstall</code> removes the hooks. The history stays.</p>
+      <p><a class="link" href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">Download the app</a> for macOS 14 or later. It includes the CLI. For terminal access, choose <strong>Install Command-Line Tools…</strong> in its menu. For the CLI only, use the <a class="link" href="https://github.com/HugoLopes45/undoturn/releases/latest">latest release</a>.</p>
+      <p>To record a project, choose <strong>Install Agent Hooks…</strong> in the menu, or run <code>undoturn init</code> in the project. In Codex, run <code>/hooks</code> once to trust the hook.</p>
       <div class="cta__field">
         <code id="clone-cmd">git clone https://github.com/<wbr>HugoLopes45/<wbr>undoturn.git</code>
         <button type="button" class="cta__copy" data-copy="#clone-cmd">Copy</button>
@@ -832,7 +851,7 @@ restored: src/List.tsx
       </div>
       <div class="faq__item">
         <h3 data-reveal style="--i:2"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a2">Which agents does it work with?</button></h3>
-        <div class="faq__a" id="a2"><p>Claude Code, Codex CLI, Gemini CLI, Cursor CLI, GitHub Copilot CLI, Factory Droid, Devin CLI, OpenCode, Pi and Oh My Pi. Outside-path coverage depends on mapped tool payloads and parseable shell paths. For any other tool, use <code>undoturn run -- &lt;command&gt;</code>.</p><p>Claude Code, Codex, Gemini and Cursor pre-tool hooks also gate selected destructive commands and checkpoint recognized risky commands. Other integrations record without these guards. This is not a sandbox, and <code>.git</code> is not backed up.</p></div>
+        <div class="faq__a" id="a2"><p>Claude Code, Codex CLI, Gemini CLI, Cursor CLI, GitHub Copilot CLI, Factory Droid, Devin CLI, OpenCode, Pi and Oh My Pi. A file outside the project is saved only when its path appears in the tool call or shell command of the agent. For any other tool, use <code>undoturn run -- &lt;command&gt;</code>.</p><p>With Claude Code, Codex, Gemini and Cursor, UndoTurn also blocks some destructive commands, such as deleting your whole disk, and saves your files before other risky commands. With the other agents, it only records. This is not a sandbox, and <code>.git</code> is not backed up.</p></div>
       </div>
       <div class="faq__item">
         <h3 data-reveal style="--i:3"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a3">Does my code leave my Mac?</button></h3>
