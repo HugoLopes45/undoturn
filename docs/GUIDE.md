@@ -1,32 +1,27 @@
 # UndoTurn user guide
 
-UndoTurn records local file changes around coding-agent turns so you can inspect them and recover recorded versions. The app is called **UndoTurn** and its command is **`undoturn`**.
+UndoTurn saves your project files at every prompt you send to a coding agent. Each prompt is a **turn**. When a turn goes wrong, you undo it in the menu bar or with the `undoturn` command. Everything stays on your Mac.
 
-Recording is not a protection guarantee, a sandbox, or a replacement for Git and an independent backup.
-
-Command examples are recipes; any displayed output is **illustrative**, not a transcript of a verified installation. Turn numbers, times, and available client features depend on your installation.
+UndoTurn is not a sandbox and not a backup. Keep using Git and Time Machine.
 
 ## Start here
 
-- [Install the app](#install).
-- [Try your first undo and redo](#your-first-undo-and-redo) without changing agent settings.
-- [Connect a real agent](#protect-a-project), after reading the safety section below.
-- [Choose a recovery action](#choose-the-right-recovery) after stopping every writer.
-- [Troubleshoot missing turns or failures](#troubleshooting).
+1. [Install the app](#install).
+2. [Try an undo and a redo](#your-first-undo-and-redo) on a test folder. This changes no agent settings.
+3. [Connect your agent](#protect-a-project).
+4. [Undo a turn](#undo-redo-and-go-to-a-turn) when you need to.
 
 ## Before you record
 
-Read this **before `init`, Install Agent Hooks…, or a real agent's first recorded turn**:
+Read this before you connect an agent:
 
-- **File copies are not redacted.** UndoTurn keeps the bytes needed to restore files, including secrets in those files.
-- **`.env*` files are recorded even when Git ignores them.** To exclude them, create or update the project's root `.undoturnignore` **before** registration or recording. Excluded files cannot be recovered with UndoTurn.
-- **Hooks apply to your user account, not just the selected project.** `init` installs all supported integrations unless you choose `--agent`. Once installed, a supported agent can automatically register another eligible folder. Running `init` in a refused folder can still install global hooks.
-- Prompts, paths, labels, session identifiers, available model names and final replies can be stored locally. Known credential shapes in conversation text are redacted, but unrecognized secrets can remain. Notifications can show conversation text and file paths.
-- Recording is boundary-based, not continuous. Your edits made while an agent is working can be part of the same turn. Overlapping agents share an interval; changes are not attributed to individual authors.
-- **Stop agents, background jobs, generators, and other writers before recovery.** UndoTurn cannot prevent them from writing again. Do not use `--force` as a routine repair step.
-- Keep independent backups. A process with your user permissions can read or damage both the project and its local history.
+- **UndoTurn saves exact copies of your files, secrets included.** It also saves `.env*` files that Git ignores, so that an undo can restore them. To keep a file out, list it in a `.undoturnignore` file at the project root **before** the first turn.
+- **Hooks apply to your whole user account.** After setup, a connected agent records every project where it works, except [refused folders](#how-undoturn-finds-the-project).
+- **Your own edits during a turn belong to that turn.** If you undo the turn, you also undo them.
+- **Stop the agent before you undo.** UndoTurn cannot stop a program that writes again after the undo.
+- The history keeps prompts, file paths, labels and the agent's final reply. Known secret formats in this text are replaced with `[secret]`. Other secrets can stay. Notifications can show prompts and paths.
 
-For example, add these rules to an existing `.undoturnignore`, or create that file in the project root. Review the patterns for your project; do not replace unrelated rules:
+Example `.undoturnignore`:
 
 ```gitignore
 .env*
@@ -34,32 +29,13 @@ secrets/
 *.pem
 ```
 
-This does not modify or sanitize any `.env` file. It changes what future recording may store. Earlier copies remain until explicitly [purged or deleted](#ignored-files). See [What UndoTurn stores](#what-undoturn-stores) for privacy and retention details.
-
-## Concepts
-
-| Term | Meaning |
-|---|---|
-| Project / workspace | The resolved folder whose files UndoTurn scans. `init`, or the first recorded agent turn or `run`, registers it. |
-| Turn | A recorded interval, usually one prompt through the agent's stop event. Numbers such as `#1` are local to a project. A turn with no file changes creates no history node. |
-| Current turn / head | The current **history position**, marked `*` by `list`. It does not prove that working files match it: later edits, selective restoration, or kept files can differ. Turn `0` is the baseline before the first turn. |
-| Branch | Recording a new change after undo starts a new history branch. The other branch remains available while its file versions are retained. |
-| Store / objects | The history and stored file versions, normally in `~/Library/Application Support/UndoTurn`. |
-| Shared interval | Overlapping sessions recorded together. Participant identities and statuses are retained, but files have no per-session author attribution. |
-
-At a recording boundary, UndoTurn observes changes since the previous boundary. Changes made between turns become a separate history node with no known author. The agent's interval records the result at its end. Background writes after a turn ends are not immediately a new node; they are observed at the next boundary.
+This file changes only future recording. To remove copies that UndoTurn already saved, see [Ignored files](#ignored-files).
 
 ## Install
 
 ### Requirements
 
-| Task | Requirement |
-|---|---|
-| Run the app, CLI, or service | macOS 14 or later; a build for your Mac's architecture |
-| Build the Swift package / CLI | Swift 6.2 toolchain and macOS development tools |
-| Build or package `UndoTurn.app` | Swift 6.2 plus the **macOS 26 SDK or later**, normally supplied by Xcode 26 or later |
-
-The SDK requirement is for building the app, not a macOS 26 runtime requirement. The app and the CLI archive are universal (arm64 and x86_64).
+macOS 14 or later, on Apple silicon or Intel.
 
 ### Download a release
 
@@ -87,91 +63,47 @@ Locally built releases have Apple signing and notarization, but no GitHub build 
 
 Then install the DMG as described below, or extract the archive and copy `undoturn` and `undoturn-service` to the same stable folder, for example `~/.local/bin`.
 
-### Install a DMG
+### Install the app
 
-These steps apply to a release `UndoTurn.dmg` and to a local `UndoTurn-….dmg` that you built from this checkout or that a trusted builder supplied.
+1. Open `UndoTurn.dmg` and drag **UndoTurn.app** to **Applications**.
+2. Eject the disk image. Open UndoTurn from **Applications**.
+3. Find the UndoTurn icon in the menu bar. UndoTurn shows in the Dock only while its timeline or storage window is open.
 
-1. For a local DMG, confirm who built the image and that it is intended for your Mac. If a `.sha256` file was supplied, compare it with the DMG before opening it. A checksum checks bytes; it does not establish the builder's identity.
-2. Open the DMG in Finder. Drag **UndoTurn.app** to **Applications**.
-3. Eject the image. Launch `/Applications/UndoTurn.app`, not the copy still on the mounted image.
-4. Look for UndoTurn in the macOS menu bar. **It has no Dock icon while its timeline and storage windows are closed.** On a first launch with no projects, the app opens the empty timeline; reopening the installed app also opens the timeline. While the timeline or storage window is open, UndoTurn also shows in the Dock.
-5. If the icon is hidden near the notch or by a menu bar utility, make room in the menu bar or reopen the app from Applications. See [Troubleshooting](#troubleshooting).
+If you cannot see the icon, the menu bar may be full or hidden by the notch. Open UndoTurn again from Applications: this opens the timeline.
 
-Installing or opening the app is separate from installing agent hooks. You can complete the isolated drill below before choosing **Install Agent Hooks…**.
+### Use the command line
 
-### Gatekeeper and trusted builds
+To use `undoturn` in Terminal:
 
-A local unsigned DMG with an ad-hoc-signed, unnotarized app may be blocked by Gatekeeper. For a build you trust:
+1. In the UndoTurn menu, choose **Install Command-Line Tools…**.
+2. Select a folder that is on your shell's `PATH`, for example `~/.local/bin`.
 
-1. Attempt to open the installed app normally and read the exact macOS message.
-2. If macOS offers the exception, use **System Settings → Privacy & Security → Open Anyway**, then confirm the named app. The option and wording vary by macOS version and management policy.
-3. If the exception is unavailable, contact the builder or your administrator. A damaged signature, unexpected checksum, malware warning, or revoked build is a reason to stop and obtain a trusted replacement, not to bypass the warning.
+UndoTurn adds links named `undoturn` and `undoturn-service` in that folder. It never replaces an existing file and does not change your shell settings. Keep the app in Applications: the links point into it.
 
-Do not disable Gatekeeper, remove quarantine recursively, or turn off system security to install UndoTurn. An ad-hoc signature is not a verified publisher identity or notarization.
-
-### Use the bundled CLI
-
-The installed app contains both helpers:
-
-```text
-/Applications/UndoTurn.app/Contents/Helpers/undoturn
-/Applications/UndoTurn.app/Contents/Helpers/undoturn-service
-```
-
-To make the bundled tools available in Terminal:
-
-1. Open the installed app from **Applications**, not the mounted DMG.
-2. Choose **Install Command-Line Tools…** in UndoTurn's menu.
-3. Select a writable folder on your shell's `PATH`, such as `~/.local/bin` if you already configured it.
-
-The app creates links named `undoturn` and `undoturn-service`. Existing files are not replaced; selecting the same folder again keeps matching links. This action does not install agent hooks, start the service or change shell settings.
-
-Keep the app in its installed location. Replacing it there updates the linked tools; moving or deleting it breaks the links. If the chosen folder is not on `PATH`, add it yourself or use the absolute path below.
-
-You can also use the bundled CLI directly without installing links or changing `PATH`:
+Without the links, use the full path:
 
 ```sh
-UT="/Applications/UndoTurn.app/Contents/Helpers/undoturn"
-"$UT" --version
-"$UT" --help
+/Applications/UndoTurn.app/Contents/Helpers/undoturn --help
 ```
-
-Later examples spell the command `undoturn` for readability. If it is not on `PATH`, replace that word with `"$UT"` after setting `UT` as above. Install into a stable location before setting up hooks: hooks store the absolute CLI path. Keep `undoturn-service` beside the CLI.
 
 ### Build from source
 
-From the repository root of an existing checkout, build and install the CLI helpers:
+You need Xcode 26 or later. From a clone of the repository:
 
 ```sh
 swift build -c release --product undoturn
 swift build -c release --product undoturn-service
 mkdir -p "$HOME/.local/bin"
-cp .build/release/undoturn .build/release/undoturn-service \
-  "$HOME/.local/bin/"
+cp .build/release/undoturn .build/release/undoturn-service "$HOME/.local/bin/"
 ```
 
-Use `"$HOME/.local/bin/undoturn"` directly, or add that folder to your shell's `PATH`. Building the CLI alone does not install the menu bar app or agent hooks.
-
-With the app-build requirements above, package a local image:
-
-```sh
-sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg
-open .build/dist/UndoTurn-local.dmg
-```
-
-The package script also writes a `.sha256` file. For an app bundle without a DMG:
-
-```sh
-sh scripts/build-app.sh .build/UndoTurn-local.app
-```
-
-Both scripts refuse existing output paths. Choose a fresh name for a later build. They do not publish a release or notarize the app. With `UNDOTURN_SIGN_IDENTITY` set, they sign with that Developer ID identity and the hardened runtime. `scripts/release.sh` adds notarization.
+To build the app: `sh scripts/build-app.sh .build/UndoTurn-local.app`. To build a DMG: `sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg`. Without a Developer ID, the result is not notarized and macOS can block it. If macOS blocks a build you trust, use **System Settings → Privacy & Security → Open Anyway**. Do not turn off Gatekeeper.
 
 ## Your first undo and redo
 
-This small drill uses **`run`, not `init`**. It creates a temporary project and an isolated history store. It does not install hooks, edit agent configuration, install a service, or change your usual history. No agent or API access is needed.
+This test uses a temporary folder and a separate history. It does not connect an agent and does not change your real history.
 
-Copy the whole block into Terminal. Change only `UT` if your executable is elsewhere. The parentheses keep `UNDOTURN_HOME` local to this drill:
+Copy the whole block into Terminal:
 
 ```sh
 (
@@ -198,140 +130,98 @@ Copy the whole block into Terminal. Change only `UT` if your executable is elsew
 )
 ```
 
-Expected observations (not a recorded test transcript):
+You should see:
 
-1. A turn `#1` with agent `run` appears; its diff changes `before` to `after`.
-2. The preview reports that `note.txt` would be restored without changing it.
-3. After undo, the file reads `before`; after redo, it reads `after`.
-4. The final list marks `#1` as the current history position.
+1. Turn `#1` from `run`. Its diff changes `before` to `after`.
+2. The preview says that `note.txt` would be restored.
+3. `After undo: before`, then `After redo: after`.
 
-**If any step fails or the turn is missing, stop and use [Troubleshooting](#troubleshooting).** `run` returns the child command's exit code; successful execution of the child alone does not prove recording succeeded. Recording failures are reported on stderr.
-
-The demo remains in the printed temporary folder so you can inspect it. The normal app does not show this isolated store. After the block finishes, you may move that exact demo folder to the Trash; it contains both the sample project and its disposable history. Do not delete your normal UndoTurn store as demo cleanup.
-
-This proves neither agent-hook installation nor outside-project coverage. Validate your real agent separately below.
+If a step fails, see [Troubleshooting](#troubleshooting). When you are done, you can move the printed demo folder to the Trash.
 
 ## Protect a project
 
-First review [Before you record](#before-you-record), prepare the project's exclusions, and install the executable in its permanent location.
+### Connect your agent
 
-For a targeted CLI setup, choose the **one agent you use**. For example:
+**In the app:** choose **Install Agent Hooks…** and select your project. This connects all ten supported agents.
+
+**In Terminal:** connect only the agent you use:
 
 ```sh
-undoturn -C /absolute/path/to/project init --agent claude
+undoturn -C /path/to/project init --agent claude
 undoturn doctor claude
 ```
 
-Replace `claude` with a name from the table. `init` installs that account-wide integration, registers the resolved project, and stores a baseline. It cannot recover changes made before that baseline. Plain `undoturn init` installs **all ten** integrations, including settings for agents you may not use.
+`init` registers the project and saves its current state. UndoTurn cannot undo changes made before that moment. `undoturn init` without `--agent` connects all ten agents.
 
-In the app, **Install Agent Hooks…** selects and registers a project and invokes the bundled CLI's untargeted `init`. It installs all supported agent integrations and does not require a shell command on `PATH`. Use the targeted CLI form if you want only one.
-
-| Agent name | Product | Hook file installed or updated | Setup note |
+| Agent name | Product | File that UndoTurn changes | After setup |
 |---|---|---|---|
-| `claude` | Claude Code | `~/.claude/settings.json` | Restart or start a fresh session after setup. |
+| `claude` | Claude Code | `~/.claude/settings.json` | Start a new session. |
 | `codex` | Codex CLI | `~/.codex/hooks.json` | Open Codex and run `/hooks` once to trust the UndoTurn hook. |
-| `gemini` | Gemini CLI | `~/.gemini/settings.json` | Hooks must be enabled; `doctor gemini` reports a disabled setting. |
-| `cursor` | Cursor CLI | `~/.cursor/hooks.json` | This integration targets Cursor CLI hook events. |
-| `copilot` | Copilot CLI | `~/.copilot/hooks/undoturn.json` | UndoTurn-owned hook file. |
-| `droid` | Factory Droid | `~/.factory/settings.json` | See the file-tool limitations below. |
-| `devin` | Devin CLI | `~/.config/devin/config.json` | See the working-directory and payload limitations below. |
-| `opencode` | OpenCode | `~/.config/opencode/plugins/undoturn.js` | Generated plugin; restart OpenCode after setup. |
-| `pi` | Pi | `~/.pi/agent/extensions/undoturn.ts` | Generated extension; restart Pi after setup. |
-| `omp` | Oh My Pi | `~/.omp/agent/extensions/undoturn.ts` | Generated extension; restart Oh My Pi, including Orca terminals. |
+| `gemini` | Gemini CLI | `~/.gemini/settings.json` | Hooks must be on. `doctor gemini` tells you if they are off. |
+| `cursor` | Cursor CLI | `~/.cursor/hooks.json` | Start a new session. |
+| `copilot` | Copilot CLI | `~/.copilot/hooks/undoturn.json` | Start a new session. |
+| `droid` | Factory Droid | `~/.factory/settings.json` | Start a new session. |
+| `devin` | Devin CLI | `~/.config/devin/config.json` | Start a new session. |
+| `opencode` | OpenCode | `~/.config/opencode/plugins/undoturn.js` | Restart OpenCode. |
+| `pi` | Pi | `~/.pi/agent/extensions/undoturn.ts` | Restart Pi. |
+| `omp` | Oh My Pi | `~/.omp/agent/extensions/undoturn.ts` | Restart Oh My Pi. |
 
-Settings integrations preserve unrelated settings and write a full backup before changing an existing settings file. The output names that backup. Copilot's dedicated hook file and generated extensions are UndoTurn-owned; installation and removal refuse foreign files rather than overwriting them. Do not delete an agent's whole settings file to repair an integration.
+UndoTurn keeps your other settings. Before it changes an existing settings file, it saves a full backup beside it and prints the backup name.
 
 ### Check the installation
 
-Use **`doctor <agent>`**, not `doctor --agent <agent>`:
-
 ```sh
 undoturn doctor claude
-undoturn doctor claude --json
 ```
 
-The agent argument narrows **hook configuration checks**. Store permissions, running turns, pause state, recent hook errors, and service status still concern the shared store. Plain `doctor` checks every integration; missing hooks for deliberately uninstalled agents are not a reason to install them all.
+Write the agent name after `doctor`, not `--agent`. Each line starts with `ok:`, `problem:` or `hint:`. Exit code `1` means a problem. In the app, **Check Recording Setup…** runs the same check for all agents.
 
-Each text check begins with `ok:`, `problem:`, or `hint:`. Recent hook errors follow, indented, and a final `service:` line gives the service status. Exit `1` means a problem was found. Read every message: a paused state is reported as information and is not by itself a failing health check. **Check Recording Setup…** in the app runs the untargeted doctor and is a configuration check, not a live recording test.
+The check reads your configuration. To be sure that recording works, do a real test:
 
-Recent hook failures remain in the 24-hour count after an upgrade or repair. Doctor includes up to the last five recent errors. Compare their timestamps with your new test rather than treating an old warning as a new failure.
-
-### Validate your real agent
-
-A passing isolated `run` drill or doctor result does not establish that a client loads and calls its hooks. After setup:
-
-1. Choose a disposable project with no secrets, not an important working tree. Prepare its `.undoturnignore` before registration. Use `init --agent <name>` for it, or use an eligible folder that your already-installed hook may register automatically.
-2. Restart the actual agent in that folder; complete any hook trust or native approval steps. Ask it to create a harmless file such as `hello.txt` containing `hello` and then stop.
-3. Wait for the agent to settle. Run `undoturn -C /absolute/path/to/project list`, then `show <id>` and `diff <id>` for the newly listed turn. Confirm the file change is present and that no turn remains running.
-4. Stop all other writers. Preview `undo --dry-run`, apply `undo`, then `redo`. Check the file after each operation and read all per-file results.
-5. Run `doctor <agent>` again and distinguish new failures from historical ones. If cancellation matters to your workflow, test a harmless cancellation separately; a normal stop is not evidence about interruption handling.
-
-Use the actual ID from `list`, not a number copied from this guide. Delete disposable histories through [Storage](#remove-the-history-of-one-project) when you no longer need them. Hook installation remains account-wide after deleting a test project.
+1. Open your agent in a test project. Ask it to create a file `hello.txt`.
+2. Run `undoturn -C /path/to/project list`. The new turn must be in the list.
+3. Run `undoturn undo`, then `undoturn redo`, and look at the file after each command.
 
 ### How UndoTurn finds the project
 
-From the agent's working folder, UndoTurn chooses:
+From the agent's working folder, UndoTurn uses the first match:
 
-1. The deepest usable registered project containing it.
-2. Otherwise, the nearest usable Git root containing it.
-3. Otherwise, the working folder itself.
+1. A project that you already registered and that contains the folder.
+2. The nearest Git repository that contains the folder.
+3. The folder itself.
 
-It refuses roots that are your home folder or its ancestors, contain the UndoTurn store, or are inside that store. A fallback folder directly inside your home, without its own Git root, is also refused. Use a dedicated project folder rather than your home, Desktop, or Library as a recording root.
+UndoTurn refuses your home folder, any folder that contains your home folder, and the UndoTurn history folder. It also refuses a folder directly inside your home folder, such as Desktop or Documents, if it is not a Git repository. Use a dedicated project folder.
 
-Commands use the current folder unless you specify `-C`:
+Commands use the current folder. To use another one, add `-C`:
 
 ```sh
-undoturn -C /absolute/path/to/project list
+undoturn -C /path/to/project list
 ```
 
-`-C` selects project resolution; it does not make hook settings project-local. Moving a project changes its path-based history identity. Use the exact stored root when managing the old history; do not assume a moved folder adopts it automatically.
+If you move a project folder, UndoTurn starts a new history for the new path.
 
-### What each integration records
+### Safety checks before commands
 
-This is a **source-supported coverage matrix**, not an end-to-end certification of every client version. In-project scans observe eligible files at boundaries even when a pre-tool payload cannot identify an outside path. Installed clients, UI display, approval behavior, cancellation, and extension loading still require local validation.
+In Claude Code, Codex, Gemini CLI and Cursor CLI, UndoTurn checks shell commands before they run:
 
-| Integration | Recorded boundaries and mapped tools | Important limits |
-|---|---|---|
-| Claude Code | `UserPromptSubmit`, mapped `PreToolUse` shell/file tools, `Stop`; `Notification` supplies agent questions. | Esc, API failures, or a missing stop can leave a turn open. Reinstall older hooks to add `Notification`. |
-| Codex CLI | `UserPromptSubmit`, mapped `PreToolUse` shell/patch tools, `Stop`, and `Interrupt`. | `/hooks` trust is required. The client's short stop-hook deadline can be insufficient for a large scan; consider the service. |
-| Gemini CLI | `BeforeAgent`, `BeforeTool` for `run_shell_command`, and `AfterAgent`. | Hooks may be disabled. No resume command is provided by UndoTurn. Prompt-block display and interactive approvals need client validation. |
-| Cursor CLI | `beforeSubmitPrompt`, `beforeShellExecution`, and `stop`. | Pre-tool outside-path discovery is from shell calls, not every editor operation. Prompt-block display needs client validation. |
-| Copilot CLI | `userPromptSubmitted`, `preToolUse` for `bash`/`create`, and `agentStop`. | Stop provides a transcript path; final model/reply are read from it when available. Cancellation closure is not established. |
-| Factory Droid | `UserPromptSubmit`, `PreToolUse` for `Execute`/`Create`/`Edit`/`ApplyPatch`, and `Stop`. | `Execute.command` and `Create.file_path` are documented inputs; Edit/ApplyPatch shapes are less certain. Documented cancellation uses `Notification`, not the installed `Stop` event. |
-| Devin CLI | `UserPromptSubmit`, `PreToolUse` for `exec`/`write`/`edit`/`apply_patch`, and `Stop`. | Event and `exec.command` mapping is documentation-derived. No common documented `cwd`: the hook process's working folder is used. File-tool fields and cancellation are not fully documented; no resume command is provided. |
-| OpenCode | Generated plugin forwards prompts and mapped mutating tools; final reply is cached and `Stop` is sent synchronously at `session.idle`. | Plugin loading and interactive behavior depend on the installed client. Cancellation closure is not established. Hook children have a 60-second bound. |
-| Pi | Extension forwards start/tools, caches reply at `agent_end`, and sends `Stop` at `agent_settled`. | The settle event covers aborts. Hook children stop after 60 seconds; a timeout can leave recording incomplete. |
-| Oh My Pi | Extension forwards start/tools and sends `Stop` at final `agent_end`; `willContinue: true` does not close the turn. | Hook children stop after 25 seconds, before the host's default 30-second handler deadline. A shorter custom host deadline can still interrupt recording. |
+- It blocks commands that delete the whole project.
+- Commands that can destroy Git data need your confirmation in Claude Code and Cursor. Codex and Gemini block them.
+- Before other risky commands, it saves a checkpoint.
 
-The Pi/Oh My Pi extension detects the running host, including when hosts share extension directories. After an upgrade, reinstall both `pi` and `omp` integrations if you use both, then restart both hosts.
-
-### Pre-command checks
-
-Claude Code, Codex, Gemini, and Cursor have targeted shell pre-command checks. Recognized root-wide deletion patterns are rejected. Recognized destructive Git metadata commands request native confirmation in Claude Code and Cursor; Codex and Gemini deny them because their supported pre-command protocol does not request confirmation. **`.git` is excluded and is not backed up.**
-
-Other recognized risky commands create a checkpoint before execution; participants and outside watches continue across it. Empty checkpoints create no history node. Other integrations record turns but do not have these command guards.
-
-This is bounded payload analysis, not a shell sandbox. Scripts, aliases, variables, changed command implementations, and unmapped routes can evade it. A successful hook does not auto-approve the tool or replace agent-native approval. Skipped or failed hooks, ignored files, paused recording, and files above the size limit do not gain a recovery guarantee.
+These checks recognize common forms only. A script or an alias can bypass them. UndoTurn never saves the `.git` folder.
 
 ## Upgrade
 
-Upgrade without deleting your histories:
-
-1. Stop agents and background writers. Finish or investigate running turns and interrupted recovery before replacing executables. Keep an independent copy of important project data and history before a pre-release upgrade.
-2. Quit UndoTurn. Replace the app in its stable installed location, or replace **both** CLI and service helpers in their existing folder. Do not delete the history store or run `storage remove` as part of an upgrade.
-3. Launch the installed app. Reinstall each integration you use from the **new CLI**, even if its path did not change; generated hooks and event registrations may have changed:
+1. Stop your agents. Quit UndoTurn.
+2. Replace the app in Applications. Do not delete the history.
+3. Open UndoTurn. Connect your agents again, because the hooks can change between versions:
 
    ```sh
-   undoturn -C /absolute/path/to/project init --agent claude
-   undoturn doctor claude
+   undoturn -C /path/to/project init --agent claude
    ```
 
-4. If you use the service, run `undoturn service install` from the new CLI and check `undoturn service status`. Installation rewrites the launchd configuration and restarts the service. The service's executable and store paths must match this installation.
-5. Restart your agents, complete Codex trust if requested, and repeat the [real-agent validation](#validate-your-real-agent). Check the app's **Open at Login** setting if the app moved.
-
-Keep the same store location and `UNDOTURN_HOME` environment when you intend to retain the same histories. An environment variable set only in Terminal does not automatically configure a Finder-launched app or an agent launched elsewhere. A missing history view may mean the processes are using different stores, not that history was deleted.
-
-Older hook failures remain visible until they age out of the 24-hour window. Retained history is not a promise that every future pre-release build supports every older format; read any migration instructions supplied with that build.
+4. If you use the [background service](#the-background-service), run `undoturn service install` again.
+5. Restart your agents. In Codex, run `/hooks` again if it asks.
 
 ## See what the agent did
 
@@ -342,33 +232,24 @@ undoturn list
 undoturn list --all
 ```
 
-Illustrative rows:
-
 ```text
 #2 *  2026-10-23 09:49  claude  +0 ~1 −0  Update the greeting
 #1    2026-10-23 09:48  claude  +1 ~0 −0  Add a greeting [stable]
 ```
 
-Rows show ID, time, agent, added (`+`), modified (`~`) and deleted (`−`) counts, prompt, and optional label. `*` marks the history position. `list` shows its ancestor path and the default redo path; `--all` includes other branches.
+Each row shows the turn number, time, agent, files added (`+`), changed (`~`) and deleted (`−`), the prompt and an optional label. `*` marks the current position in the history. `--all` also shows other [branches](#branches).
 
-While a turn is open, `list` also shows its newest tool action and, for Claude Code, a reported question. A question clears at the next tool action or stop. The app's menu bar glyph gains a dot and it may send a notification. Notification permission and preview settings are controlled by macOS.
+While a turn runs, `list` shows the agent's latest action. The menu bar icon gets a dot when Claude Code asks you a question.
 
 ### Look at one turn
 
 ```sh
 undoturn show 2
-```
-
-Inspect the parent, agent/session information, prompt, available model/reply, and file changes before selecting a recovery target. Paths outside the project are absolute. Shared intervals expose participants without attributing individual files to them.
-
-### See the line diff
-
-```sh
 undoturn diff 2
 undoturn diff 2 src/server.ts
 ```
 
-This compares the turn's recorded Before and After versions; it is not a diff of all current unrecorded edits. Binary, oversized, or missing stored versions may have a summary instead of a line diff. `not stored` means UndoTurn cannot supply those bytes.
+`show` gives the prompt, the agent, the final reply and the changed files. `diff` shows the line changes of the turn. `not stored` means that UndoTurn has no copy of that file version.
 
 ### Name a turn
 
@@ -377,26 +258,26 @@ undoturn label 1 "stable"
 undoturn label 1 --clear
 ```
 
-Labels help locate a useful state. They do not pin its objects against retention or turn it into an independent backup.
+A label helps you find a good state. It does not protect the turn from [cleanup](#free-disk-space).
 
 ## Undo, redo and go to a turn
 
-**First stop every writer.** Preview the operation, read its scope, then apply it and read the per-file report. Keep a separate copy of any unrecorded edit you cannot afford to lose. Recovery is file-version based, not a line-by-line merge.
+**First stop your agents.** Then preview the action, apply it and read the result for each file.
 
 ### Choose the right recovery
 
-Here `12` is an illustrative turn ID, **not a count**. Use IDs from your project's `list`.
+`12` is a turn number from `undoturn list`, **not a count**.
 
-| You want to… | Command | History effect |
-|---|---|---|
-| Undo the latest applied turn | `undoturn undo` | Moves to its parent. |
-| Undo turn #12 **and every later applied turn** | `undoturn undo 12` | Moves to the state **before** #12; #12 must be an ancestor of the current position. |
-| Reach the state **after** #12, including on another branch | `undoturn goto 12` | Undoes/redoes the route to that position. `goto 0` reaches the initial baseline. |
-| Reverse only #12 while keeping later history | `undoturn revert 12` | Applies its nonconflicting inverse as a **new turn**; #12 must be on the applied history path. |
-| Recover selected project files/folders, not move history | `undoturn restore config.json src/ --at 12` | Restores their state **before** #12. Add `--after` for the state after it; no new turn or head move. |
-| Reapply undone history | `undoturn redo` or `undoturn redo 12` | Applies the next default child, or the descendant route up to #12. Use `goto` for an explicit other branch. |
+| You want to… | Command |
+|---|---|
+| Undo the last turn | `undoturn undo` |
+| Go back to before #12, and undo every later turn too | `undoturn undo 12` |
+| Undo only #12 and keep the later turns | `undoturn revert 12` |
+| Go to the state after #12, also on another branch | `undoturn goto 12` |
+| Restore some files as they were before #12, without changing the history | `undoturn restore config.json src/ --at 12` |
+| Redo an undone turn | `undoturn redo` |
 
-All five recovery commands accept `--dry-run`. `--force` is deliberately not part of the normal workflow.
+Add `--dry-run` to any of these commands to see the result without changing files.
 
 ### Undo the last turn
 
@@ -405,20 +286,20 @@ undoturn undo --dry-run
 undoturn undo
 ```
 
-| Per-file result | Meaning |
-|---|---|
-| `restored: <path>` | Wrote the recorded version. |
-| `removed: <path>` | Removed a path absent in the target version. |
-| `kept: changed after the turn: <path>` | Current content or relevant mode differs from the expected recorded state. |
-| `kept: not stored: <path>` | Required bytes are unavailable, for example above 50 MiB or removed by collection. |
-| `kept: a parent folder is a symbolic link or a file: <path>` | UndoTurn refused to write through that parent. |
-| `skipped: <path>` | Already matches the desired version; no write was needed. |
+The result has one line per file:
 
-A report may contain several kinds of result. Check every affected file, not just the first restored line.
+| Result | Meaning |
+|---|---|
+| `restored: <path>` | UndoTurn wrote the saved version. |
+| `removed: <path>` | The file did not exist in that version, so UndoTurn removed it. |
+| `kept: changed after the turn: <path>` | Someone changed the file later. UndoTurn kept your version. |
+| `kept: not stored: <path>` | UndoTurn has no copy, for example because the file is larger than 50 MiB. |
+| `kept: a parent folder is a symbolic link or a file: <path>` | UndoTurn refused to write there. |
+| `skipped: <path>` | The file already had the right content. |
 
 ### Undo several turns
 
-`undoturn undo 12` is **not** “undo twelve turns” or “undo only #12.” If the current path is #10 → #11 → #12 → #13, it moves to #11 and reverses #12 and #13 together, subject to per-file checks.
+`undoturn undo 12` does **not** mean "undo 12 turns". If the history is #10 → #11 → #12 → #13, it goes back to #11. That undoes #12 and #13 together.
 
 ### Undo only one turn
 
@@ -427,26 +308,21 @@ undoturn revert 12 --dry-run
 undoturn revert 12
 ```
 
-A revert reverses only the selected turn's applicable file versions and records what was applied as a new turn. Later conflicting file versions are kept, not merged. If nothing can be applied, no new turn is created. Undoing the newly created revert can bring the original change back.
-
-A shared interval has no per-file author attribution: revert cannot remove just one participant's work from it.
+Revert undoes only the changes of #12 and saves the result as a new turn. If a later turn changed the same file, UndoTurn keeps the later version. To bring the change back, undo the new turn.
 
 <a id="your-edits-are-safe"></a>
 
 ### Handle conflicts and exit 3
 
-Without force, recovery keeps files that differ from the expected recorded state. This reduces accidental overwrites; it is not a promise that all of your edits are identifiable or recoverable. Edits made during an agent interval belong to that interval too.
+UndoTurn does not overwrite a file that changed after the turn. It keeps your version and reports `kept:`. The command then exits with code `3`.
 
-**Exit `3` does not roll back the command.** For `undo`, `redo`, and `goto`, history can move to the target even when some files were kept or already matched. A partial revert can create its new turn. Thus the current `*` may no longer describe all working bytes.
+**Exit code `3` does not cancel the command.** The history can already be at the new position. Do not repeat `undo`: it would undo another turn. Instead:
 
-After exit `3`:
+1. Read the `kept:` lines.
+2. Run `undoturn list` to see where the history is now.
+3. Save your own changes, then use `restore --at` to get the saved version of a file.
 
-1. Read the `kept:` and `skipped:` results. Already-matching skips can be harmless; missing stored bytes cannot be repaired with force.
-2. Inspect the new history position with `list` and compare the relevant recorded versions with `show`/`diff`.
-3. Preserve your current edits elsewhere before manual reconciliation. For specific recorded project versions, consider `restore --at <id>` with a preview.
-4. Do not blindly repeat `undo` or add `--force`: the next undo may target a different turn because history already moved.
-
-`--force` permits overwriting later edits and may abandon an open recording interval. Copies saved before a forced overwrite are not a new user-visible turn and may be garbage-collected. They are not a dependable rescue workflow. Force does not restore unavailable objects or make a non-directory/symlink parent safe to traverse.
+`--force` overwrites your later changes. Use it only after you save them somewhere else. It cannot bring back a file that UndoTurn did not store.
 
 ### Redo
 
@@ -455,13 +331,11 @@ undoturn redo --dry-run
 undoturn redo
 ```
 
-With no ID, redo chooses the newest child of the current position. `redo 12` requires #12 to descend from the current position. Use `list --all` and `goto <id>` to choose a different branch explicitly.
+Redo applies the newest undone turn. `redo 12` goes forward to #12. To choose another branch, use `goto`.
 
 ### Undo from the agent prompt
 
-In Claude Code, Codex, Gemini CLI, or Cursor, the complete prompt `undoturn undo` or `undoturn redo` is intercepted by the prompt hook: it runs locally and blocks submission to the model. A longer prompt such as `please undoturn undo` is not this shortcut. Stop other active work first.
-
-A client can describe the intercepted prompt as “blocked by hook”; that message can contain the local recovery result rather than an error. Gemini and Cursor's interactive display still needs validation in your installed client. Stop hooks do not execute a command merely echoed in the original prompt. This shortcut has no force option.
+In Claude Code, Codex, Gemini CLI and Cursor CLI, send exactly `undoturn undo` or `undoturn redo` as your prompt. UndoTurn runs it on your Mac and does not send it to the model. The agent can show it as "blocked by hook": that message contains the result.
 
 ### Go to any turn
 
@@ -470,54 +344,31 @@ undoturn goto 12 --dry-run
 undoturn goto 12
 ```
 
-This targets the state **after** #12, not before it. The route may cross branches and affect more than that one turn. Review its file scope. `goto 0` targets the baseline, not an empty project.
+This goes to the state **after** #12. It can undo and redo several turns on the way. `goto 0` goes back to the state before the first turn.
 
 ### Branches
 
-Undoing and then recording new work creates a branch without deleting the other turns. List branches with `undoturn list --all`; choose a recorded state with `goto <id>`.
-
-Branch visibility does not mean its file copies remain forever. Garbage collection can remove off-current-path objects; moving to an old branch may then report `kept: not stored`.
+If you undo a turn and the agent then makes a new change, the history splits into a new branch. The old turns are not deleted. Use `undoturn list --all` to see them and `goto` to go back to one. After [cleanup](#free-disk-space), an old branch can report `kept: not stored`.
 
 ### Restore selected files without moving history
 
 ```sh
 undoturn restore config.json src/ --at 12 --dry-run
 undoturn restore config.json src/ --at 12
-undoturn restore config.json --at 12 --after --dry-run
+undoturn restore config.json --at 12 --after
 ```
 
-The default selects **Before #12**. `--after` selects **After #12**. A folder includes only recorded descendants. Other files, recorded turns, and the current history position remain unchanged.
-
-Paths are relative to the **project root**, or absolute inside it, even when you use `-C` from a subfolder. Outside-project paths, `..` components, the project root itself, and unknown recorded paths are rejected. Put dash-prefixed names after `--`:
+This restores the files as they were **before** #12, or **after** #12 with `--after`. Other files and the history do not change. Paths are relative to the project root. For a file name that starts with `-`, put it after `--`:
 
 ```sh
 undoturn restore --at 12 -- --example.txt
 ```
 
-This still checks conflicts against the current recorded state. An earlier selective restoration can itself count as an intervening edit, so switching Before/After is not necessarily an immediate toggle.
-
-**`undo` does not directly reverse a selective restore.** Use another explicit `restore` for the recorded version you want; inspect and save current work before considering force. At the next recording boundary, selective-restore changes can be recorded as between-turn changes.
-
-### Preview changes
-
-```sh
-undoturn undo --dry-run
-undoturn restore config.json --at 12 --after --dry-run --json
-```
-
-Preview writes no project changes, overwritten-file copies, history record, or restoration journal. Text uses `would restore`, `would remove`, `would keep`, and `would skip`. JSON adds `"dryRun": true` while retaining its normal per-file outcome names.
-
-Preview uses the normal exit meanings: `3` for any kept/skipped files, `4` for nothing to do. It cannot finish an active turn or interrupted restoration, even with `--force`. A preview is not a reservation; another writer can change the files before you apply it.
+`undo` does not cancel a restore. To go back, run another `restore`.
 
 ### Undo while the agent works
 
-Normal recovery refuses an ordinary open turn; the app requires recording to stop. Stop all agents and background jobs, let the client emit its stop/settled event, and inspect `list` again. Pausing alone does not end a turn.
-
-A cancellation or client failure can leave recording open. A later prompt from the same session interrupts its earlier participant, but does not close other active sessions. Do not start unrelated real work merely to clear the warning. Inspect the agent status, recorded interval, and diagnostics first.
-
-The CLI's `--force` can mark active participants interrupted and finalize the interval before recovery. **This can abandon a shared interval too; it does not stop those processes.** The same flag also authorizes overwriting later edits. Use it only after confirming every writer is stopped, preserving current data separately, and deliberately accepting both effects. There is no separate routine “close stale turn safely” command.
-
-The native app never force-closes recording and has no **Anyway** action. MCP has a narrower single-session checkpoint/continuation path described below; it is not permission to recover across other writers.
+UndoTurn refuses to undo while a turn is running. Stop the agent and wait until it finishes, then try again. If a turn stays open after the agent stopped, see [Troubleshooting](#troubleshooting).
 
 ### Pause recording
 
@@ -526,102 +377,78 @@ undoturn pause
 undoturn resume
 ```
 
-Pause applies to **all projects in that store**. Hooks start no new turns and register no new projects while paused. A turn that began before the pause is still recorded when it stops. Pause neither stops agents nor erases existing data. Resume explicitly, then confirm the state in doctor or the menu bar app.
+Pause stops recording for all projects. A turn that started before the pause is still saved. You can also use **Pause Recording** in the menu.
 
 ## The menu bar app
 
-UndoTurn runs in the menu bar. It shows in the Dock only while its timeline or storage window is open. The app displays the store it was launched with. CLI helpers and installed agent hooks perform recording; quitting the UI does not uninstall hooks or the separate service, but notifications require the app to be running.
+UndoTurn runs in the menu bar. Your agents record turns even when the app is closed. Notifications need the app to run.
 
 ### The menu
 
-Click the UndoTurn menu bar icon:
+Click the UndoTurn icon in the menu bar:
 
-- Projects offer **Undo #N** and **Redo #N**, with a scope summary. Read the result and kept-file report after using them.
-- Recent turns open their timeline details. The menu includes every project with a running turn and at most three other projects active in the last seven days. Others are in **More Projects**.
-- **Open Timeline** (`⌘T`) opens the history browser.
-- **Manage Storage…**, **Install Agent Hooks…**, and **Check Recording Setup…** manage data and setup. The last two invoke the bundled CLI, not a command found through `PATH`.
-- **Install Command-Line Tools…** links both bundled tools into a folder you choose. See [Use the bundled CLI](#use-the-bundled-cli).
-- **Pause Recording** becomes **Resume Recording** when paused.
-- **Open at Login** controls the app's login item. It is separate from the optional launchd service.
-- **About UndoTurn** and **Quit UndoTurn** are at the bottom.
-- **Recorded hook failures (24h): N** is historical evidence of failures, not a current coverage indicator.
-
-Menu shortcuts `⌘Z` and `⇧⌘Z` are assigned to the first listed eligible project for each action, not necessarily the project you have in mind. Redo skips a running project. Use a named project's action when the destination matters; native recovery still refuses active recording.
+- Each project shows **Undo #N** and **Redo #N**, with a summary of the files that change. `⌘Z` and `⇧⌘Z` act on the first project in the list.
+- Recent turns open in the timeline. The menu shows projects with a running turn and the three most recent projects of the last seven days. The others are in **More Projects**.
+- **Open Timeline** (`⌘T`) opens the history window.
+- **Manage Storage…** shows the space used by each project.
+- **Install Agent Hooks…** connects your agents. **Check Recording Setup…** checks them.
+- **Install Command-Line Tools…** adds `undoturn` to your Terminal. See [Use the command line](#use-the-command-line).
+- **Pause Recording** stops recording until you choose **Resume Recording**.
+- **Open at Login** starts the app when you log in.
+- **Recorded hook failures (24h): N** appears when recording failed in the last 24 hours.
 
 ### The timeline
 
 1. Select a project in **Projects**.
-2. Select a turn in its history tree. Branches and undone turns remain visible.
-3. Review its prompt, agent, time, label, changed files, and diff. Shared intervals list participant identities/statuses, not per-file authors.
-4. Choose the recovery whose scope you intend:
-   - **Undo This Turn** on the current turn moves to its parent.
-   - **Go to #N** on another turn moves to the state **after** that turn; it is not a selective restore.
-   - **Revert Just This Turn…** reverses an applied turn's nonconflicting changes into a new entry.
-   - **Restore File or Folder…** offers **Before #N…** and **After #N…** for a selected project path, without moving history.
-5. Review restored/removed/kept counts and expand **File Results** for individual outcomes. Kept files can leave working bytes different from the current history position.
+2. Select a turn. Undone turns and branches stay visible.
+3. Read the prompt, the agent, the changed files and the diff.
+4. Choose an action:
+   - **Undo This Turn** undoes the current turn.
+   - **Go to #N** goes to the state after that turn.
+   - **Revert Just This Turn…** undoes only that turn and keeps the later ones.
+   - **Restore File or Folder…** restores one path **Before #N** or **After #N**, without changing the history.
+5. Read the result. **File Results** lists each file.
 
-Use the **⋯** menu for **Add Label…** / **Edit Label…**, **Copy Prompt**, and **Copy Resume Command** when available. Gemini and Devin have no UndoTurn resume command. Native recovery refuses active recording; disabled controls or a refusal explain why. There is no force-close option in the app.
-
-The toolbar supplies Undo/Redo actions and the sidebar control. The timeline has a minimum content size of 960 × 440 points so its three columns stay usable.
+The **⋯** menu has **Add Label…**, **Copy Prompt** and **Copy Resume Command**. Gemini and Devin have no resume command. The app never forces an undo while a turn runs.
 
 ### Alerts for mass deletes
 
-While running, the app warns when a turn has at least 50 net deleted files, or at least three net deletions accounting for a quarter of the project's pre-turn files. Net deletions subtract created files; folders themselves do not count.
-
-A notification may offer **Undo #N**. It is a history action, not a guarantee that every byte is recoverable. If the history position has changed, the app opens the relevant details rather than blindly undoing a different turn. macOS notification permission and previews control visibility. Agent-question notifications can expose text on the lock screen; review those system settings if needed.
+When the app runs, it warns you if a turn deletes 50 files or more. It also warns if a turn deletes at least 3 files and a quarter of the project. The notification can offer **Undo #N**.
 
 ## The background service
 
-The optional service tracks changed paths so hooks can scan less of a large project. Without it, hooks scan the project at recording boundaries. If the service cannot supply trustworthy changes, recording falls back to a full scan; neither mode guarantees all files are recoverable.
+The service is optional. It watches which files change, so that large projects record faster. Without it, UndoTurn scans the project at each turn.
 
 ```sh
 undoturn service install
 undoturn service status
-```
-
-Installation writes `~/Library/LaunchAgents/io.github.hugolopes45.undoturn.service.plist` with the selected service/store paths. launchd starts it at login and restarts it if it stops. Status is `not installed`, `installed, not running`, or `running`.
-
-Keep the service helper beside the CLI. After replacing or moving helpers, run `service install` again from the intended CLI. To remove the launchd installation:
-
-```sh
 undoturn service uninstall
 ```
 
-This removes the plist and asks launchd to unload the job. A successful exit does not confirm that the service process stopped. To confirm, look for `undoturn-service` in Activity Monitor.
-
-The service also runs ordinary retention at startup when due and daily. This can reduce older branch recovery options; see below. Installing the service is separate from enabling the app's **Open at Login**.
+The service starts at login. It also cleans up old versions once a day. Install it again after you move or replace the app.
 
 ## Storage and disk space
 
 ### What UndoTurn stores
 
-The default store is `~/Library/Application Support/UndoTurn`. `UNDOTURN_HOME` selects another store for processes that inherit it; use an absolute folder outside the project. Keep the app, agents, CLI, and service aligned if you intentionally change stores.
+The history is in `~/Library/Application Support/UndoTurn`. Only your user account can read it. It contains:
 
-Each project has `workspaces/<id>/` containing its root path, file versions in `objects/`, `history.log`, mirror, locks, and any restoration journal. Running-turn metadata includes the latest mapped tool action and agent question and is removed at the end of the turn. The history can contain prompts, labels, paths, timestamps, participants, session/transcript identifiers, model names, and final replies when available. Replies are capped at 4,096 UTF-8 bytes, with `…` marking truncation. The whole transcript is not copied into the store, although supported integrations may read it for metadata.
+- a copy of each file version, as an APFS clone that uses almost no space until the file changes;
+- prompts, labels, file paths, times, agent names and final replies (up to 4 KB).
 
-File versions use APFS clones where supported. Clones share blocks until content changes; plain copies are used when cloning is unsupported or crosses volumes. Files above **50 MiB** are not stored. A path can appear in history with unavailable bytes; its presence is not proof of a usable backup.
-
-Inside the project, symbolic links are recorded by their target text, not by following them. Folders and their modes are recorded too: recovery can restore an empty deleted folder or remove a newly created one, but keeps a folder containing other files. Outside the project, watches record regular files only, not symbolic links or folder metadata.
-
-**Redaction is limited to recognized text shapes.** Private-key blocks, known API-key prefixes, some Bearer/Basic credentials, URL passwords, and values under secret-like names can become `[secret]` in prompts, replies, commands, and agent questions. Unrecognized secrets, labels, paths, and file contents must not be assumed sanitized. Older raw history records are not rewritten merely because a newer viewer redacts displayed text. Rotating a credential does not remove its old file copies.
-
-Store directories use POSIX mode `0700`; stored objects, logs, and journals use `0600`. These are not encryption or isolation from other processes running as you; ACLs are not audited. Treat a copy or backup of the store as sensitive project and conversation data. Agent-native network use and any content you explicitly expose through MCP remain subject to that client's behavior and permissions.
+UndoTurn does not save files larger than 50 MiB, the `.git` folder, or the `node_modules`, `.build`, `DerivedData` and `Pods` folders. File contents are never redacted. Treat a copy of the history as sensitive data.
 
 ### Ignored files
 
-UndoTurn reads nested `.gitignore` files and `.git/info/exclude`, but not Git's global excludes. **`.env*` files override Git ignores** so they can be recovered, unless the root `.undoturnignore` excludes them. The scanner always skips `.git`, `node_modules`, `.build`, `DerivedData`, and `Pods` directories.
+UndoTurn skips files that your `.gitignore` files ignore, except `.env*` files. To skip more, add a `.undoturnignore` file at the project root. It uses the `.gitignore` format, except `[abc]` character classes. Only the root file counts.
 
-Only the root `.undoturnignore` is used. Its supported Git-style subset includes comments, `!` negation, rooted/slashed and directory patterns, `*`, `?`, `**`, and escaped leading `#`/`!`. It does **not** interpret bracket character classes. A matched directory is not scanned; nested `.undoturnignore` files are not applied.
+New rules apply to future turns. To delete copies already saved for the files that you now ignore, run:
 
-```gitignore
-.env*
-secrets/
-*.pem
+```sh
+undoturn gc
 ```
 
-Adding exclusions does not retroactively erase earlier bytes. **Explicit `undoturn gc` can permanently purge versions referenced only by now-excluded paths**, even on the current history path. Purging waits while a turn is pending or a restoration journal exists; resolve that state and run it again. Copies also used by another recorded path remain. History keeps path/size metadata; diffs and recovery may then report `not stored`.
-
-To remove an entire project's stored versions and history, use [Delete History… or `storage remove`](#remove-the-history-of-one-project). Do not promise secure erasure from APFS snapshots, Time Machine, or other backups when deleting UndoTurn data. The [threat model](THREAT-MODEL.md) explains the boundaries.
+This deletion is permanent, even for the current history. To delete the whole history of a project, see [Remove the history of one project](#remove-the-history-of-one-project).
 
 ### Free disk space
 
@@ -629,59 +456,44 @@ To remove an entire project's stored versions and history, use [Delete History�
 undoturn gc
 ```
 
-Collection removes unprotected stored versions older than 30 days and, when total object sizes across projects exceed 5 GiB, evicts the oldest eligible versions first. Versions needed by the current history path stay protected **except for explicit exclusion purges**. This is not a hard disk quota or a guarantee of 30-day recovery: the size budget can evict eligible versions sooner, and protected history can exceed the budget.
-
-Ordinary retention runs at startup when due and daily while the service runs; otherwise collection is manual. Scheduled retention does not purge old copies just because `.undoturnignore` changed; explicit `gc` is required for that. Busy projects can be skipped and retried later. Incomplete service collections are logged in `<store>/service-errors.log` and do not advance the last-success timestamp. Collection holding a project lock can delay a hook.
-
-Collected turns may still appear in history, but `redo` or `goto` can report `kept: not stored` for their missing objects. Labels do not prevent collection.
+`gc` deletes saved versions that are older than 30 days and not needed by the current history. If the history uses more than 5 GiB, it deletes the oldest of these versions first. The background service runs this cleanup every day. Labels do not protect a turn from cleanup.
 
 ### See the space of each project
 
-Choose **Manage Storage…** in the app, or use:
+Choose **Manage Storage…** in the menu, or run:
 
 ```sh
 undoturn storage
-undoturn storage list --json
 ```
 
-Histories are shown largest first, with project root, turn count, last activity, and reclaimable bytes. Running turns and missing project folders are marked. Reclaimable bytes are an estimate, not the apparent total of file sizes: UndoTurn uses the size of unshared blocks where macOS reports it, and the allocated size otherwise.
-
-JSON uses `schemaVersion: 1` and a `projects` array with `root`, `rootExists`, `reclaimableBytes`, `turnCount`, `lastActivity`, and `turnRunning`. `lastActivity` is Unix seconds or `null`. An empty store has an empty array.
+Projects are listed from the largest. The size is an estimate of the space that deleting the history would free.
 
 ### Remove the history of one project
 
-In Storage, **Delete History…** removes a project's stored history; **Delete All History…** removes all histories. The app asks for confirmation and refuses a project with a running turn. Project files are not changed. With hooks still installed, a later agent turn can register the project again.
+In **Manage Storage…**, choose **Delete History…** for one project, or **Delete All History…**. The app asks you to confirm. It does not delete a project while a turn runs. Your project files do not change.
 
-CLI deletion has **no confirmation prompt**. List first, then deliberately supply the intended root:
+In Terminal, there is **no confirmation**:
 
 ```sh
 undoturn storage
-undoturn storage remove /absolute/path/to/project
+undoturn storage remove /path/to/project
 ```
 
-Use the exact listed root for a missing folder; an existing equivalent path, including `.`, is accepted. An active turn blocks deletion; exit `4` means no history exists for that root. JSON removal reports `root`, `schemaVersion`, and `exitReason` (`completed` or `nothingToDo`).
-
-**Deleting history also deletes its interrupted restoration journal.** It does not finish that recovery: project files remain as the interruption left them. Resolve or investigate interrupted recovery before deleting its history.
-
-Successful removal also retries cleanup from interrupted earlier deletions. A cleanup failure returns exit `1`, even if the requested history is already gone, names the remaining folder, and emits no JSON result. Inspect stderr; the next successful removal retries cleanup. Do not delete unrelated project files to resolve a history-store error.
-
-Settings backups are separate: removing history does not remove the full `*.undoturn-backup-<time>` copies stored beside agent settings.
+Use the exact path that `storage` shows. If the agent works in the project again, UndoTurn starts a new history.
 
 ## Record any command
 
-Wrap a foreground command, such as a generator, with `run`:
+To record a command that is not an agent, for example a code generator:
 
 ```sh
-undoturn run -- /bin/sh -c 'printf "generated\n" > generated.txt'
+undoturn run -- npm run generate
 ```
 
-No `init` is required; the first `run` registers an eligible project and records a baseline. It brackets the child process with start/stop recording, rather than installing account-wide hooks. It does not synthesize agent pre-tool events for the child, so do not expect automatic outside-project discovery or shell guards from this wrapper.
-
-`run` returns the child's exit status. A failure to launch is `126`, or `127` if the command does not exist. Recording errors are printed to stderr without replacing the child's status. Always inspect history before assuming a successful command has a recoverable turn. Processes the command leaves running can write after the recorded interval has ended.
+`run` saves the files before and after the command, as one turn. It returns the exit code of the command.
 
 ## Let an agent use UndoTurn
 
-MCP access is optional and separate from recording hooks. Register the stdio server with a client you use; these examples change client configuration:
+Your agent can read and undo turns itself through MCP. This is optional. Add UndoTurn to your agent:
 
 ```sh
 claude mcp add -s user undoturn -- \
@@ -690,110 +502,55 @@ codex mcp add undoturn -- \
   /Applications/UndoTurn.app/Contents/Helpers/undoturn mcp
 ```
 
-Use the installed executable's actual path. The server resolves the project from its working directory. For a fixed project, register it with `-C /absolute/path/to/project` before `mcp`.
-
-The tools are `list`, `diff`, `undo`, `redo`, `goto`, and `revert`. Ask explicitly, for example: “Use UndoTurn to inspect the last turn before deciding whether to undo it.” Read-only annotations are hints; changing-tool permissions and interactive approvals depend on the client. Interactive permission behavior is not certified here. Exposing MCP makes history content available to the agent; decide whether that is appropriate for the project.
-
-Changing tools refuse shared recording. An eligible single-session turn can be checkpointed and resumed around a move under one lock; later supported tool calls, including outside-file changes, remain recorded in a marked continuation. An empty continuation creates no node and does not block immediate CLI undo/redo. Ordinary pending turns still block normal CLI moves.
-
-MCP moves never use force to overwrite newer edits. Arguments that do not match a tool's input schema are rejected before the turn ends. An unknown or inapplicable turn ID can fail after the current recording boundary is written. Recovery of an interrupted MCP move can resume its recording continuation. Inspect per-file results: a kept/skipped result can accompany a changed history position just as in the CLI. The server implements protocol revisions `2025-11-25` and `2025-06-18`; it is not a network listener or a blanket authorization to modify files.
+The agent gets the tools `list`, `diff`, `undo`, `redo`, `goto` and `revert`. Ask it explicitly, for example: "Use UndoTurn to show the last turn before you undo it." The agent can then read your history. MCP actions never force an undo over your changes.
 
 ## Files outside the project
 
-Supported **agent pre-tool hooks** can identify outside files before mapped mutating tools run, then include their changes in the interval. Whole-history recovery can restore recorded outside versions too; `show` lists their absolute paths. Selective `restore` is restricted to project paths.
+When an agent changes a file outside the project, for example in your home folder, UndoTurn can also save it. This works when the agent hook sees the path before the change: in a file tool, or in a simple shell command. UndoTurn saves only regular files under your home folder, `/Volumes` or `/private/tmp`.
 
-Coverage is narrower than a full filesystem snapshot:
-
-- Candidates must be under your home folder, `/Volumes`, or `/private/tmp`, and pass the store/project safety filters.
-- Each tool call has a shared **5,000-entry collection budget**, including rejected walks. A path that does not fit is not partially recorded. Once exhausted, no new paths are watched for that call; existing watches remain. The next tool call has a fresh budget. Explicit write candidates take priority over precautionary scan operands.
-- Shell paths come from parseable command text; scripts, variables, aliases, and unsupported syntax can hide them or produce extra candidates. Mapped file and patch inputs depend on the agent version and payload shape.
-- Cursor supplies shell calls. Droid Edit/ApplyPatch and Devin file-tool input shapes are incompletely documented. In-project boundary scans do not fix a missed outside-file candidate.
-- An outside path containing an unreadable folder may be rejected and logged. A warning is not evidence that its bytes were captured.
-
-Read-only scans such as `ls`, `grep`, and `find` normally do not make operands candidates when their output reaches neither a file nor a program that can act on it. Operands remain precautionary candidates when output is written to a file, piped to a non-read-only consumer such as `xargs rm`, includes relevant expansions, or a reading-command name is redefined as a function/alias. `/dev/null` and the terminal are not output files for this rule. Redirections and recognized writing forms remain candidates. Too-long filesystem names, such as inline program text, are not usable paths.
-
-For Oh My Pi, shell paths use the `bash` tool's own `cwd` without changing the registered project. Hashline edits include file sections and rename destinations; supported file-edit modes and `apply_patch` are mapped too. Archive/database write selectors identify their container, **not database side files**. Internal URLs such as `agent://` and `xd://` are not filesystem candidates.
-
-Do not test this coverage with valuable outside files. Use a disposable scenario with the actual installed agent and inspect both stored versions before relying on recovery.
+An undo restores these files too. `undoturn show` lists them with their full path. `restore` works only inside the project. Do not count on this for important files outside the project.
 
 ## Scripts: JSON and exit codes
 
-`--json` is supported by `list`, `show`, `diff`, `undo`, `redo`, `goto`, `revert`, `restore`, `storage`, `gc`, and `doctor`:
-
-```sh
-undoturn list --json
-undoturn show 12 --json
-undoturn undo --dry-run --json
-```
-
-Successful command results and per-file reports go to stdout. Errors remain plain text on stderr, even with `--json`. Do not parse stderr as a JSON document or treat a nonempty JSON report as full recovery success.
-
-Results use `schemaVersion: 1`. Recovery reports include `from`, `to`, `files` (each with `path` and `outcome`), and `exitReason`: `completed`, `keptOrSkipped`, or `nothingToDo`. Previews add `dryRun: true`. Compare the reported positions and inspect every outcome.
-
-`show --json` includes available `model`, `reply`, and `started` fields; `started` is Unix seconds when the log supplies a start time. Older records may lack this optional conversation metadata. Full file versions and transcript data should not be inferred from a metadata field alone.
+Add `--json` to `list`, `show`, `diff`, `undo`, `redo`, `goto`, `revert`, `restore`, `storage`, `gc` and `doctor`. Results go to standard output. Errors stay plain text on standard error.
 
 | Exit code | Meaning |
 |---|---|
-| `0` | Command completed; still read any informational state such as paused recording. |
-| `1` | Error, or doctor found a problem. A filesystem error can follow partial recovery; inspect diagnostics before continuing. |
-| `2` | Invalid command or arguments. |
-| `3` | Recovery kept or skipped at least one file. **History may already have moved.** Applies to previews too. |
-| `4` | Nothing to do, such as no next undo/redo or no history at a requested storage root. |
+| `0` | Done. |
+| `1` | Error, or `doctor` found a problem. |
+| `2` | Invalid command or option. |
+| `3` | At least one file was kept or skipped. The history may have moved. |
+| `4` | Nothing to do, for example nothing to undo. |
 
-`run` is the exception: it returns the child status (or launch failure `126`/`127`), not a dedicated recording-success code. A caller should capture it before another shell command overwrites `$?`. MCP communicates through protocol/tool results rather than these process exit codes for each call.
+`run` returns the exit code of its command instead.
 
 ## Troubleshooting
 
-### Find the cause without forcing recovery
-
-| Symptom | What to check or do |
+| Problem | What to do |
 |---|---|
-| App opens but there is no Dock icon | Expected while the timeline and storage windows are closed: UndoTurn is a menu bar app. Reopen `/Applications/UndoTurn.app` to show the timeline. Make room near the notch or check menu bar-hiding utilities. |
-| `undoturn: command not found` | Choose **Install Command-Line Tools…** and select a writable folder already on your shell's `PATH`. The app does not change `PATH`. Alternatively, use `/Applications/UndoTurn.app/Contents/Helpers/undoturn` by its quoted absolute path. |
-| macOS blocks the app | Follow the [trusted-build Gatekeeper workflow](#gatekeeper-and-trusted-builds); do not disable security or remove quarantine indiscriminately. |
-| No project or no turns | Check the intended store and `-C` folder, [refused roots](#how-undoturn-finds-the-project), pause state, and `doctor <agent>`. No-change turns produce no node. Verify the actual agent with a harmless edit. |
-| `run` succeeded but nothing was recorded | Child success is not recording success. Read stderr, inspect history/store permissions and refused roots, and repeat only in the disposable drill after fixing the cause. |
-| Codex records nothing | Run `/hooks` inside Codex to trust UndoTurn; restart the client and perform a harmless real-agent check. |
-| Gemini hooks are disabled | If doctor asks for `hooksConfig.enabled: true` in `~/.gemini/settings.json`, review and change that setting without replacing other configuration, then restart Gemini. |
-| Untargeted doctor complains about unused agents | Use `doctor <agent>`. Missing deliberately uninstalled integrations are expected; do not install every hook merely to make the global check green. |
-| Hook missing or points to a non-executable path | Reinstall that integration with `init --agent <name>` from the intended installed CLI. Restart the agent. After an app move/upgrade, reinstall the service too if used. |
-| Setup refuses a foreign hook file | UndoTurn will not overwrite it. Review the named dedicated file and resolve ownership deliberately; do not delete the agent's full configuration or unrelated extensions. |
-| Doctor still shows recent failures after a fix | Read timestamps. The last 24 hours include old failures; compare with your latest harmless test. |
-| Turn remains running or is older than an hour | Check for active/background sessions and missed stop/cancellation events. Stop writers; inspect the interval before any recovery. Pause does not close it; force is not a routine fix. |
-| Recovery exits `3` | Read every kept/skipped result and `list` the new position. Follow [conflict handling](#handle-conflicts-and-exit-3); do not blindly repeat undo. |
-| `nothing to undo` | The current history position is at the baseline. Use `list --all` to inspect other branches; it does not mean the project folder should be empty. |
-| `kept: not stored` / diff says `not stored` | Bytes may exceed 50 MiB, be unreadable at recording, or have been collected/purged. Force cannot recreate them. Try Git or an independent backup. |
-| Parent is now a symlink or regular file | UndoTurn refuses to traverse it, including with force. Inspect the path and intended layout manually; do not replace it blindly. |
-| CLI sees history but the app does not | Check that both use the same store. Terminal-only `UNDOTURN_HOME` is not inherited by a normally Finder-launched app. The first-run drill deliberately uses a different store. |
-| Service is missing or stopped | Check `service status`, helper placement, and the current installed paths. Reinstall with `service install` if you intend to use it. Recording otherwise falls back to scans. |
+| No icon in the Dock | This is normal: UndoTurn is a menu bar app. Open it again from Applications to see the timeline. |
+| No icon in the menu bar | The menu bar may be full or hidden by the notch. Remove other icons, or open the app from Applications. |
+| `undoturn: command not found` | Choose **Install Command-Line Tools…** and select a folder on your `PATH`, or use the full path `/Applications/UndoTurn.app/Contents/Helpers/undoturn`. |
+| No turns appear | Run `undoturn doctor <agent>`. Check that recording is not paused and that the project is not a [refused folder](#how-undoturn-finds-the-project). A turn that changes no file does not appear. |
+| Codex records nothing | Run `/hooks` in Codex to trust UndoTurn, then restart Codex. |
+| Gemini hooks are off | Set `hooksConfig.enabled` to `true` in `~/.gemini/settings.json`, then restart Gemini. |
+| `doctor` reports agents you do not use | Use `undoturn doctor <agent>` for your agent only. |
+| A hook points to a missing file | You moved or replaced the app. Run `undoturn init --agent <name>` again and restart the agent. |
+| `doctor` still shows old failures | It counts failures from the last 24 hours. Look at the times. |
+| A turn stays "running" | Stop the agent completely. If the agent crashed, the turn stays open. `undo --force` closes it, but also overwrites your later changes: save them first. |
+| Exit code `3` | Read the `kept:` lines. See [Handle conflicts and exit 3](#handle-conflicts-and-exit-3). Do not repeat `undo`. |
+| `nothing to undo` | The history is at its start. Run `undoturn list --all` to see other branches. |
+| `kept: not stored` | UndoTurn has no copy of that file: it was too large, unreadable or cleaned up. Use Git or your backup. |
+| The app and Terminal show different histories | They use different history folders. `UNDOTURN_HOME` set in Terminal does not apply to the app. |
+| An undo was interrupted | Stop your agents, free disk space if it is full, then run the same command again. UndoTurn finishes the interrupted undo. Do not delete files in the history folder. |
 
-### Recover after an interruption
-
-Stop all writers first. Keep the store and restoration journal intact. An applied restoration uses a durable journal; a later recovery-capable operation can finish an interrupted move under the project lock. **Even a normal history read such as `list` can enter recovery**, so do not treat it as a byte-preserving forensic snapshot of an interrupted operation.
-
-A dry run refuses unfinished recovery because completing it would write. Resolve obvious causes such as a full disk or permissions problem, preserve the project/store separately if investigating, then use the intended normal command and inspect the result. If recovery still fails, collect redacted diagnostics before changing journal files. Do not delete the journal or history, run GC to “repair” it, or add force blindly. A filesystem mutation and its progress record are not atomic; concurrent writes and crashes still limit what can be established.
-
-### Ask for help without sharing secrets
-
-Collect a small, reproducible report from a disposable project when possible:
-
-- macOS version, Mac architecture, UndoTurn `--version`, and whether it came from a local DMG or source build;
-- the installed executable location, agent/version, and exact command or UI action used;
-- exit status and relevant `doctor <agent>` output, including timestamps;
-- the relevant kept/skipped lines, whether a turn is pending, and whether the service is running;
-- a minimal description of expected versus observed files, without credentials or proprietary content.
-
-Doctor includes recent entries from `<store>/hook-errors.log`. Service diagnostics use `<store>/service-errors.log`; extension failures may also appear in the agent terminal. Review these **before sharing**. Paths, prompts, replies, commands, labels, session IDs, diff contents, and notification screenshots can contain sensitive data even after automatic redaction.
-
-Do not attach a whole history store, object directory, agent settings file, settings backup, or transcript by default. Copy only necessary excerpts and manually redact secrets and personal paths. Describe the local build's provenance separately from its version string; the source may report a development version. Use this repository's issue process for a redacted bug report, and its security-reporting instructions for a suspected vulnerability.
+To report a bug, give your macOS version, `undoturn --version`, the agent, the command and its output. Remove secrets and private paths first. Do not send your history folder.
 
 ## Uninstall
 
-Remove launch points **while the installed CLI is still available**. Uninstalling hooks alone does not delete history, stop the service, or disable the app's login item.
-
-1. Stop agents and background writers. Finish or investigate running turns and interrupted recovery. If you are keeping history, preserve the complete store rather than selected object files.
-2. Turn off **Open at Login** in UndoTurn's menu. If necessary, manage the UndoTurn entry in **System Settings → General → Login Items** (wording may vary).
-3. Remove hooks and the optional service using the installed CLI:
+1. Stop your agents.
+2. In the UndoTurn menu, turn off **Open at Login**.
+3. Remove the hooks and the service:
 
    ```sh
    UT="/Applications/UndoTurn.app/Contents/Helpers/undoturn"
@@ -801,32 +558,25 @@ Remove launch points **while the installed CLI is still available**. Uninstallin
    "$UT" service uninstall
    ```
 
-   `uninstall --agent <name>` removes only one integration, not the entire setup. A successful `service uninstall` does not confirm that the service process stopped; check Activity Monitor for `undoturn-service`. Exit/restart agents that may still have a generated extension loaded. Remove any MCP registration you added through that client's own configuration controls; `undoturn uninstall` does not remove MCP server entries.
-4. Decide whether to **keep history**. Keeping the store is the default; reinstalling binaries does not itself erase it. For deliberate deletion, use **Manage Storage… → Delete History… / Delete All History…**, or list and remove individual roots with `storage remove` while the CLI is present. Deletion is permanent from UndoTurn's perspective and does not change project files. Do not delete a journal whose interrupted recovery you still need.
-5. Choose **Quit UndoTurn**, then move `/Applications/UndoTurn.app` to the Trash. Remove the `undoturn` and `undoturn-service` links from the folder you chose in **Install Command-Line Tools…**. Remove only CLI/service copies or links you installed; do not remove unrelated tools.
+   If you added UndoTurn to an agent with MCP, remove it in that agent.
+4. To delete the history, use **Manage Storage… → Delete All History…**. To keep it, do nothing.
+5. Choose **Quit UndoTurn**, then move UndoTurn to the Trash. Delete the `undoturn` and `undoturn-service` links that **Install Command-Line Tools…** created.
 
-If you intentionally want to remove all remaining local data after those steps, inspect the known default store or your chosen custom store and move that exact folder to the Trash. This also removes diagnostic logs and residual store state. Do not confuse it with a project folder, and do not use broad recursive deletion commands copied from an example.
-
-Full settings backups beside agent configuration can remain after uninstall and may contain sensitive settings. Review their names before removing them. Do not restore a whole old backup over newer unrelated agent configuration. Copies in Time Machine or other backups are outside UndoTurn's deletion controls.
+The settings backups beside your agent settings files (`*.undoturn-backup-<time>`) stay. Delete them yourself if you do not need them.
 
 ## Limits
 
-- UndoTurn is **not a sandbox or an independent backup**. Same-user processes can change the store; local disk failure can lose project and history together.
-- Recording requires the relevant hook or wrapper to run successfully. Configuration checks and historical warnings are not proof of present or future recovery coverage.
-- Recorded intervals are not authorship records. Your edits and overlapping sessions can share a turn; background changes are only observed at a later boundary.
-- Ignore rules, missing stop events, unreadable/unstable files, the 50 MiB per-file limit, and retention can leave versions unavailable. `.git` is never backed up by the project scanner.
-- Outside coverage depends on mapped payloads, allowed paths, parseable commands, and a bounded collection budget. It is not continuous filesystem monitoring or a full database backup.
-- Command checks cover selected patterns in four integrations only. Agent-native approvals remain necessary; scripts and unmapped routes can evade detection.
-- Conflict handling is per file, not a content merge. Kept files can coexist with an advanced history position. Force is destructive and does not solve missing bytes or live writers.
-- Recovery journals progress, but cannot atomically couple every filesystem mutation to its progress record or prevent another process writing after a check.
-- Known-shape redaction is not complete secret detection. File bytes remain exact, and deleting local history does not erase external backups or agent transcripts.
-- Client versions, cancellation behavior, generated-plugin loading, and interactive approval/display paths need the [real-agent validation](#validate-your-real-agent), not assumptions from a successful CLI drill.
+- UndoTurn is not a sandbox and not a backup. The history is on the same disk as your projects.
+- UndoTurn saves your files when a turn starts and ends, not continuously. Two agents that work at the same time share their turns.
+- UndoTurn cannot restore a file that it did not store: ignored, larger than 50 MiB, or cleaned up.
+- An undo replaces whole files. It does not merge lines.
+- Secret redaction recognizes common formats only. File contents are never redacted.
 
-See [THREAT-MODEL.md](THREAT-MODEL.md) for the security boundaries.
+The [threat model](THREAT-MODEL.md) explains the security limits.
 
 ## Command reference
 
-This reference follows the current CLI's source-defined help. Use your installed executable's `--help` to identify differences in another build. IDs are decimal turn numbers without the display `#` prefix; `undo <id>` selects a turn, not a count.
+This is the output of `undoturn --help`. IDs are turn numbers without the display `#` prefix; `undo <id>` selects a turn, not a count.
 
 ```text
 Usage: undoturn <command> [arguments...]
@@ -872,4 +622,4 @@ Global options:
   --version                      Show the version.
 ```
 
-Agents invoke `hook`; you normally do not run it yourself. `run` requires `--` before the child command. For `diff` and `restore` paths and for ordinary label text, `--` stops option parsing, so later dash-prefixed text is not read as an option. The label text `--clear` stays reserved, even after `--`. `storage remove` refuses a root that begins with `-`, even after `--`; give it the absolute root that `storage` lists. Only the commands listed in [JSON and exit codes](#scripts-json-and-exit-codes) support `--json`.
+Agents run `hook` themselves; you do not need it. `run` needs `--` before the command. For a path or a label that starts with `-`, put it after `--`.
