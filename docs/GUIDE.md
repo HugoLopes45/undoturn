@@ -39,29 +39,9 @@ macOS 14 or later, on Apple silicon or Intel.
 
 ### Download a release
 
-Each [release](https://github.com/HugoLopes45/undoturn/releases) has:
+Download [UndoTurn for Mac](https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg). The app includes the command-line tools; you do not need a second download.
 
-| File | Contents |
-|---|---|
-| `UndoTurn.dmg` | The menu bar app, with the CLI and the service in `Contents/Helpers` |
-| `undoturn-macos-universal.tar.gz` | The CLI and the service only |
-| `SHA256SUMS` | The SHA-256 of each file |
-
-The app and CLI archive are universal, signed with a Developer ID and notarized by Apple. Download `SHA256SUMS` from the same release, place it beside your download, then check it:
-
-```sh
-shasum -a 256 -c SHA256SUMS --ignore-missing
-```
-
-Releases built by GitHub Actions also include a [build provenance attestation](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations). Their release notes identify that build method. For those releases, you can also run:
-
-```sh
-gh attestation verify UndoTurn.dmg --repo HugoLopes45/undoturn
-```
-
-Locally built releases have Apple signing and notarization, but no GitHub build attestation. A checksum detects a changed download; it does not authenticate the publisher.
-
-Then install the DMG as described below, or extract the archive and copy `undoturn` and `undoturn-service` to the same stable folder, for example `~/.local/bin`.
+If you prefer the command line without the app, follow the [CLI installation steps](https://github.com/HugoLopes45/undoturn#quick-start).
 
 ### Install the app
 
@@ -85,19 +65,6 @@ Without the links, use the full path:
 ```sh
 /Applications/UndoTurn.app/Contents/Helpers/undoturn --help
 ```
-
-### Build from source
-
-You need Xcode 26 or later. From a clone of the repository:
-
-```sh
-swift build -c release --product undoturn
-swift build -c release --product undoturn-service
-mkdir -p "$HOME/.local/bin"
-cp .build/release/undoturn .build/release/undoturn-service "$HOME/.local/bin/"
-```
-
-To build the app: `sh scripts/build-app.sh .build/UndoTurn-local.app`. To build a DMG: `sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg`. Without a Developer ID, the result is not notarized and macOS can block it. If macOS blocks a build you trust, use **System Settings → Privacy & Security → Open Anyway**. Do not turn off Gatekeeper.
 
 ## Your first undo and redo
 

@@ -31,6 +31,8 @@ swift format lint --strict --recursive Sources Tests Package.swift
 
 To format your changes: `swift format --in-place --recursive Sources Tests Package.swift`.
 
+To build a local app, run `sh scripts/build-app.sh .build/UndoTurn-local.app`. To build a local DMG, run `sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg`. Both need the macOS 26 SDK. Without `UNDOTURN_SIGN_IDENTITY`, they use ad-hoc signing; neither script notarizes its output. Use [Releases](#releases) for distribution.
+
 ## Rules for code
 
 - Put logic in `UndoTurnCore`. Keep the CLI and the app thin.
@@ -91,6 +93,20 @@ For maintainers:
 9. Check the draft and its downloads, then publish it: `gh release edit vX.Y.Z --draft=false --latest`.
 
 To build on GitHub instead, configure the `release` environment with `DEVELOPER_ID_P12_BASE64`, `DEVELOPER_ID_P12_PASSWORD`, `NOTARY_KEY_P8_BASE64`, `NOTARY_KEY_ID` and `NOTARY_ISSUER_ID`. Run `gh workflow run release.yml --ref vX.Y.Z` on the changelog's UTC release date. The manual workflow checks the tag, builds, tests, signs, notarizes and attests the same three assets, then creates the draft. Do not run both publication paths for the same tag.
+
+### Verify release downloads
+
+Place `SHA256SUMS` beside the downloaded assets, then run:
+
+```sh
+shasum -a 256 -c SHA256SUMS --ignore-missing
+```
+
+A checksum detects changed bytes; it does not authenticate the publisher. Both release paths use Developer ID signing and Apple notarization. Only GitHub-hosted builds have GitHub build provenance attestations:
+
+```sh
+gh attestation verify UndoTurn.dmg --repo HugoLopes45/undoturn
+```
 
 ## License of contributions
 

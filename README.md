@@ -174,7 +174,7 @@ Requirements: macOS 14 or later.
 | **App** (menu bar app, CLI and service) | [UndoTurn.dmg](https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg) | Drag **UndoTurn** to **Applications**, eject the DMG and open the app. For terminal access, choose **Install Command-Line Tools…** in its menu. No separate CLI download is needed. |
 | **CLI only** (CLI and service) | [undoturn-macos-universal.tar.gz](https://github.com/HugoLopes45/undoturn/releases/latest/download/undoturn-macos-universal.tar.gz) | See the commands below. |
 
-For download checks and help with macOS security prompts, see the [installation guide](docs/GUIDE.md#download-a-release).
+Need help? See the [installation guide](docs/GUIDE.md#install).
 
 With the app, read [Before you record](docs/GUIDE.md#before-you-record), then choose **Install Agent Hooks…** and select a project. Terminal access is optional.
 
@@ -195,23 +195,7 @@ Hooks store the absolute path of the CLI. Install it in a stable location before
 
 </details>
 
-<details>
-<summary>Build from source</summary>
-
-Requirements: Xcode 26 or the Swift 6.2 toolchain.
-
-```sh
-git clone https://github.com/HugoLopes45/undoturn.git
-cd undoturn
-swift build -c release
-mkdir -p ~/.local/bin
-cp .build/release/undoturn .build/release/undoturn-service ~/.local/bin/
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-To build a local app installer: `sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg`. Without `UNDOTURN_SIGN_IDENTITY`, the app and helpers are ad-hoc signed and the DMG is unsigned. This script does not notarize either build. Use a fresh output path for another build.
-
-</details>
+To build from source, see [Contributing](CONTRIBUTING.md#set-up).
 
 Before `init`, read [Before you record](docs/GUIDE.md#before-you-record). In short: `init` installs hooks for all ten agents in your user account, and `.env*` files are recorded unless `.undoturnignore` excludes them. To install one agent only, use `init --agent <name>`. To try undo and redo first without hooks, follow [Your first undo and redo](docs/GUIDE.md#your-first-undo-and-redo).
 

@@ -13,24 +13,24 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Install the bundled CLI and service links from **Install Command-Line Tools…** in the app, choosing a writable folder without a separate download or automatic shell changes.
 - The menu, the timeline, the storage window and folder panels show the UndoTurn icon and name, so you always know which app you are in. While the storage window is open, UndoTurn also shows in the Dock and the menu bar.
 - Confirmations to delete history or restore files open as a sheet on their window and list the project, the turns and the space or files they affect.
-- Agents can inspect and restore history through `undoturn mcp`, a stdio MCP server. Moves retain conflict protection and never force writes (ADR 0036).
+- Agents can inspect and restore history through `undoturn mcp`, a stdio MCP server. Moves retain conflict protection and never force writes.
 - `undoturn storage` lists stored histories and reclaimable space; `storage remove <root>` deletes one history without touching project files. Both support JSON.
-- `undoturn restore <path…> --at <id>` restores selected files or folders without moving history; `--after` selects the state after the turn. History moves and file restoration support `--dry-run` (ADR 0037).
-- First version: turn recording, undo, redo and goto for ten agent CLIs, the `undoturn` CLI, an optional FSEvents service and a menu bar app. See the [README](README.md) and the [user guide](docs/GUIDE.md).
-- `undoturn revert <id>` undoes only one turn and keeps the turns after it. The result is a new turn that `undo` can take back (ADR 0029).
-- Turns record symbolic links by target, and undo restores them. Links are never followed (ADR 0030).
-- Turns record folders with their modes. Undo restores empty folders and removes the folders that a turn made, unless they contain other files (ADR 0031).
-- In Claude Code and Codex, the prompt `undoturn undo` or `undoturn redo` runs the command and never reaches the model (ADR 0033).
-- Gemini CLI and Cursor prompt hooks also handle exact `undoturn undo` and `undoturn redo` prompts with their native block responses (ADR 0039).
-- The menu bar app's **Manage Storage…** window lists each project's history with its turns, last activity and estimated reclaimable space. It deletes one history or all of them, and refuses a project with a running turn (ADR 0032).
-- Prompts, replies, commands and agent questions show `[secret]` in place of private keys, known API key formats, `Bearer` credentials, URL passwords and values of names such as `password` or `api_key`. UndoTurn hides them before it stores or shows the text (ADR 0034).
-- A `.undoturnignore` file in the project root keeps files out of UndoTurn, also `.env*` files. It uses a subset of the `.gitignore` syntax: `*`, `?`, `**`, `!`, a leading or inner `/` and a trailing `/`. Explicit `undoturn gc` removes copies used only by ignored paths when no turn or restoration is pending (ADR 0035).
-- The optional service runs ordinary retention at startup and daily. Busy projects are skipped and incomplete runs are logged. Historical ignored-path purging remains exclusive to explicit `undoturn gc` (ADR 0038).
+- `undoturn restore <path…> --at <id>` restores selected files or folders without moving history; `--after` selects the state after the turn. History moves and file restoration support `--dry-run`.
+- First version: turn recording, undo, redo and goto for ten agent CLIs, the `undoturn` CLI, an optional FSEvents service and a menu bar app. See the [README](https://github.com/HugoLopes45/undoturn#readme) and the [user guide](https://hugolopes45.github.io/undoturn/guide.html).
+- `undoturn revert <id>` undoes only one turn and keeps the turns after it. The result is a new turn that `undo` can take back.
+- Turns record symbolic links by target, and undo restores them. Links are never followed.
+- Turns record folders with their modes. Undo restores empty folders and removes the folders that a turn made, unless they contain other files.
+- In Claude Code and Codex, the prompt `undoturn undo` or `undoturn redo` runs the command and never reaches the model.
+- Gemini CLI and Cursor prompt hooks also handle exact `undoturn undo` and `undoturn redo` prompts with their native block responses.
+- The menu bar app's **Manage Storage…** window lists each project's history with its turns, last activity and estimated reclaimable space. It deletes one history or all of them, and refuses a project with a running turn.
+- Prompts, replies, commands and agent questions show `[secret]` in place of private keys, known API key formats, `Bearer` credentials, URL passwords and values of names such as `password` or `api_key`. UndoTurn hides them before it stores or shows the text.
+- A `.undoturnignore` file in the project root keeps files out of UndoTurn, also `.env*` files. It uses a subset of the `.gitignore` syntax: `*`, `?`, `**`, `!`, a leading or inner `/` and a trailing `/`. Explicit `undoturn gc` removes copies used only by ignored paths when no turn or restoration is pending.
+- The optional service runs ordinary retention at startup and daily. Busy projects are skipped and incomplete runs are logged. Historical ignored-path purging remains exclusive to explicit `undoturn gc`.
 - Shared recording retains each overlapping session's identity and status. Stale Stop events cannot close another session, and intervening edits become separate between-turns nodes.
 - Claude Code, Codex, Gemini and Cursor pre-tool hooks gate recognized destructive commands and create pre-command checkpoints without losing active participants or outside watches.
 - Native file/folder Before and After recovery includes previews and per-file results. Selective turn revert is separate from history navigation; native recovery refuses active recording.
 - The app can install agent hooks, run setup diagnostics, and show hook failures recorded within the last 24 hours.
-- Signed and notarized universal macOS releases include the app DMG, an optional CLI archive and `SHA256SUMS` on GitHub Releases. The app bundles both command-line tools.
+- Download the app or the CLI from GitHub Releases. The app includes both command-line tools.
 - A browser user guide, `docs/guide.html`, generated from `docs/GUIDE.md` by `scripts/build-docs.sh`.
 
 ### Fixed
@@ -55,8 +55,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Detect Pi versus Oh My Pi at runtime when they share an extension directory. Use the host's tool names and completion event. Stop Oh My Pi hook children after 25 seconds and Pi hook children after 60 seconds.
 - Exclude read-only shell operands and search patterns from outside-path collection while retaining output redirections and mutating forms. Keep the operands when output goes to a file or to a command that acts on its input, or when the command redefines a reading command's name. Kept operands use the entry budget after the paths that commands write. Handle line continuations and empty arguments correctly.
 - Skip outside-path candidates that the file system refuses as too-long names, such as inline code. These words no longer log a failed hook.
-- Remove the temporary files that a killed undo, redo or goto leaves next to the files it was writing. The recovery of the journal now removes them (ADR 0011).
-- A hook that waited for a project's lock while its history was deleted takes the lock of the new history folder, so two hooks never write the same history at the same time (ADR 0032).
+- Remove the temporary files that a killed undo, redo or goto leaves next to the files it was writing. The recovery of the journal now removes them.
+- A hook that waited for a project's lock while its history was deleted takes the lock of the new history folder, so two hooks never write the same history at the same time.
 - A menu bar undo or redo that keeps files shows every kept file in the timeline. When notifications are unavailable, the timeline opens with the report in place of a truncated alert. UndoTurn keeps only the latest report.
 - Bind each recovery notification to its exact result, not just its project and turn. An older notification reports that its details are unavailable instead of showing a later undo or redo.
 - The turn header scrolls within half the detail pane, so an expanded prompt cannot push the files and diff out of view. A running turn's detail scrolls too.

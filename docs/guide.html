@@ -103,37 +103,8 @@ secrets/
 <h3 id="requirements"><a href="#requirements">Requirements</a></h3>
 <p>macOS 14 or later, on Apple silicon or Intel.</p>
 <h3 id="download-a-release"><a href="#download-a-release">Download a release</a></h3>
-<p>Each <a href="https://github.com/HugoLopes45/undoturn/releases">release</a> has:</p>
-<div class="table-scroll" tabindex="0">
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>Contents</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>UndoTurn.dmg</code></td>
-<td>The menu bar app, with the CLI and the service in <code>Contents/Helpers</code></td>
-</tr>
-<tr>
-<td><code>undoturn-macos-universal.tar.gz</code></td>
-<td>The CLI and the service only</td>
-</tr>
-<tr>
-<td><code>SHA256SUMS</code></td>
-<td>The SHA-256 of each file</td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>The app and CLI archive are universal, signed with a Developer ID and notarized by Apple. Download <code>SHA256SUMS</code> from the same release, place it beside your download, then check it:</p>
-<pre class="sh" tabindex="0"><code>shasum -a 256 -c SHA256SUMS --ignore-missing</code></pre>
-<p>Releases built by GitHub Actions also include a <a href="https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations">build provenance attestation</a>. Their release notes identify that build method. For those releases, you can also run:</p>
-<pre class="sh" tabindex="0"><code>gh attestation verify UndoTurn.dmg --repo HugoLopes45/undoturn</code></pre>
-<p>Locally built releases have Apple signing and notarization, but no GitHub build attestation. A checksum detects a changed download; it does not authenticate the publisher.</p>
-<p>Then install the DMG as described below, or extract the archive and copy <code>undoturn</code> and <code>undoturn-service</code> to the same stable folder, for example <code>~/.local/bin</code>.</p>
+<p>Download <a href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">UndoTurn for Mac</a>. The app includes the command-line tools; you do not need a second download.</p>
+<p>If you prefer the command line without the app, follow the <a href="https://github.com/HugoLopes45/undoturn#quick-start">CLI installation steps</a>.</p>
 <h3 id="install-the-app"><a href="#install-the-app">Install the app</a></h3>
 <ol type="1">
 <li>Open <code>UndoTurn.dmg</code> and drag <strong>UndoTurn.app</strong> to <strong>Applications</strong>.</li>
@@ -150,13 +121,6 @@ secrets/
 <p>UndoTurn adds links named <code>undoturn</code> and <code>undoturn-service</code> in that folder. It never replaces an existing file and does not change your shell settings. Keep the app in Applications: the links point into it.</p>
 <p>Without the links, use the full path:</p>
 <pre class="sh" tabindex="0"><code>/Applications/UndoTurn.app/Contents/Helpers/undoturn --help</code></pre>
-<h3 id="build-from-source"><a href="#build-from-source">Build from source</a></h3>
-<p>You need Xcode 26 or later. From a clone of the repository:</p>
-<pre class="sh" tabindex="0"><code>swift build -c release --product undoturn
-swift build -c release --product undoturn-service
-mkdir -p &quot;$HOME/.local/bin&quot;
-cp .build/release/undoturn .build/release/undoturn-service &quot;$HOME/.local/bin/&quot;</code></pre>
-<p>To build the app: <code>sh scripts/build-app.sh .build/UndoTurn-local.app</code>. To build a DMG: <code>sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg</code>. Without a Developer ID, the result is not notarized and macOS can block it. If macOS blocks a build you trust, use <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>. Do not turn off Gatekeeper.</p>
 <h2 id="your-first-undo-and-redo"><a href="#your-first-undo-and-redo">Your first undo and redo</a></h2>
 <p>This test uses a temporary folder and a separate history. It does not connect an agent and does not change your real history.</p>
 <p>Copy the whole block into Terminal:</p>
