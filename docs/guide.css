@@ -15,6 +15,7 @@
   --measure: 34rem;
   --page: 64rem;
   --radius: 4px;
+  --site-h: 3.5rem;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -58,7 +59,7 @@ a:hover { color: var(--accent-strong); text-decoration-color: currentColor; }
   position: absolute;
   top: 0.5rem;
   left: var(--margin);
-  z-index: 1;
+  z-index: 3;
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius);
   background: var(--ink);
@@ -71,10 +72,16 @@ a:hover { color: var(--accent-strong); text-decoration-color: currentColor; }
 
 /* Site header and footer */
 .site {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  box-sizing: border-box;
+  min-height: var(--site-h);
+  background: var(--bg);
   padding: 0.875rem max(var(--margin), (100% - var(--page)) / 2 + var(--margin));
   border-bottom: 1px solid var(--rule);
 }
@@ -114,10 +121,10 @@ main { min-width: 0; padding-block: 2.5rem 5rem; }
   .rail {
     display: block;
     position: sticky;
-    top: 0;
+    top: var(--site-h);
     align-self: start;
-    max-height: 100vh;
-    max-height: 100dvh;
+    max-height: calc(100vh - var(--site-h));
+    max-height: calc(100dvh - var(--site-h));
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-block: 2.75rem 2rem;
@@ -163,7 +170,7 @@ h2 {
 }
 h3 { margin: 2.5rem 0 0.625rem; font-size: 1.1875rem; line-height: 1.3; letter-spacing: -0.01em; }
 h4 { margin: 2rem 0 0.5rem; font-size: 1rem; line-height: 1.4; }
-:where(h2, h3, h4) { scroll-margin-top: 1.5rem; }
+:where(h2, h3, h4) { scroll-margin-top: calc(var(--site-h) + 1.5rem); }
 :where(h2, h3, h4) > a { color: var(--ink); text-decoration: none; }
 :where(h2, h3, h4) > a:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule-strong); }
 h1 + p { font-size: 1.1875rem; line-height: 1.55; }
@@ -247,6 +254,7 @@ td code { overflow-wrap: anywhere; }
   }
   body { font-size: 11pt; }
   .skip, .site nav, .rail, .toc, .site-footer ul { display: none; }
+  .site { position: static; }
   .layout { display: block; max-width: none; padding: 0; }
   main { padding: 0; }
   main > * { max-width: none; }
