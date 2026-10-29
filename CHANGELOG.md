@@ -6,6 +6,10 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- About UndoTurn names the author, Hugo Lopes, and links to his GitHub account.
+
 ## [0.1.0] - 2026-10-29
 
 ### Added

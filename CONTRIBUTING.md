@@ -76,7 +76,7 @@ For maintainers:
    sh scripts/release.sh
    ```
 
-5. Check `SHA256SUMS` in `.build/release-artifacts/X.Y.Z`, install the DMG and exercise the app and bundled CLI. The three release assets are `UndoTurn.dmg`, `undoturn-macos-universal.tar.gz` and `SHA256SUMS`. Keep binaries out of Git history.
+5. Check `SHA256SUMS` in `.build/release-artifacts/X.Y.Z`, install the DMG and exercise the app and bundled CLI. Run `swift scripts/test-about.swift /Applications/UndoTurn.app`; it opens About UndoTurn and checks the author and GitHub link. The three release assets are `UndoTurn.dmg`, `undoturn-macos-universal.tar.gz` and `SHA256SUMS`. Keep binaries out of Git history.
 6. Tag the validated commit: `git tag -a vX.Y.Z -m "UndoTurn X.Y.Z"`, then `git push origin main vX.Y.Z`.
 7. Create a draft with the changelog notes and the three files:
 
