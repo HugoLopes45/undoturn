@@ -100,6 +100,7 @@ code.path { white-space: normal; }
 /* controls */
 .button { display: inline-flex; align-items: center; justify-content: center; min-height: 3rem; padding: 0 1.4rem; background: var(--accent); color: var(--accent-ink); border-radius: var(--radius); text-decoration: none; white-space: nowrap; font-weight: 500; transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease; }
 .button:active { transform: scale(0.97); }
+.button--small { min-height: 2.5rem; padding: 0 1rem; font-size: 16px; }
 .link { text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 0.2em; text-decoration-thickness: 0.07em; transition: text-decoration-color var(--t-hover) ease, color var(--t-hover) ease; }
 .link-plain { color: var(--accent); text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 0.07em; }
 .ctl { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; min-width: 2.75rem; padding: 0 1rem; border-radius: var(--radius); background: var(--surface); font-size: 16px; transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease, opacity var(--t-hover) ease; }
@@ -475,6 +476,7 @@ html:not(.js) .reel__window { overflow-x: auto; }
         <li><a class="link" href="#faq">FAQ</a></li>
         <li><a class="link" href="guide.html">User guide</a></li>
       </ul>
+      <a class="button button--small" href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">Download for Mac</a>
     </nav>
 
     <h1 class="hero__title lines">
@@ -564,7 +566,6 @@ restored: tests/items.test.ts
 
     <div class="hero__act" data-load style="--d:440ms">
       <p class="hero__sentence lead"><span>Every prompt to Claude Code, Codex and 8 other agents is a save&nbsp;point.</span> <span>Undo it in one click, on your Mac.</span></p>
-      <a class="button" href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">Download for Mac</a>
     </div>
   </div>
 </header>
