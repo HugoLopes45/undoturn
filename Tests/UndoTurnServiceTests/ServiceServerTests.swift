@@ -401,9 +401,8 @@ private final class ServiceFixture {
 
   deinit {
     server.stop()
-    let state = removefile_state_alloc()
-    defer { removefile_state_free(state) }
-    _ = removefile(home, state, removefile_flags_t(REMOVEFILE_RECURSIVE))
+    _ = nftw(
+      home, { entry, _, _, _ in entry.map { Darwin.remove($0) } ?? -1 }, 16, FTW_DEPTH | FTW_PHYS)
   }
 }
 

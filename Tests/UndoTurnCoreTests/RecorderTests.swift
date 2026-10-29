@@ -837,12 +837,12 @@ private func writeFile(_ bytes: [UInt8], to path: String) throws(SystemError) {
 }
 
 private func removeContents(of path: String) throws(SystemError) {
-  guard let state = removefile_state_alloc() else {
-    throw SystemError(operation: "removefile_state_alloc", path: path, code: ENOMEM)
-  }
-  defer { removefile_state_free(state) }
-  guard removefile(path, state, removefile_flags_t(REMOVEFILE_RECURSIVE)) == 0 else {
-    throw SystemError(operation: "removefile", path: path, code: errno)
+  guard
+    nftw(
+      path, { entry, _, _, _ in entry.map { Darwin.remove($0) } ?? -1 }, 16, FTW_DEPTH | FTW_PHYS)
+      == 0
+  else {
+    throw SystemError(operation: "nftw", path: path, code: errno)
   }
   guard mkdir(path, 0o755) == 0 else {
     throw SystemError(operation: "mkdir", path: path, code: errno)

@@ -19,9 +19,8 @@ struct LedgerTemporaryDirectory: ~Copyable {
   }
 
   deinit {
-    let state = removefile_state_alloc()
-    defer { removefile_state_free(state) }
-    _ = removefile(path, state, removefile_flags_t(REMOVEFILE_RECURSIVE))
+    _ = nftw(
+      path, { entry, _, _, _ in entry.map { Darwin.remove($0) } ?? -1 }, 16, FTW_DEPTH | FTW_PHYS)
   }
 }
 

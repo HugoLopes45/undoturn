@@ -128,9 +128,9 @@ private struct ClientFixture: ~Copyable {
     self.workspace = workspace
   }
   func cleanupServiceHome() {
-    let state = removefile_state_alloc()
-    defer { removefile_state_free(state) }
-    _ = removefile(serviceHome, state, removefile_flags_t(REMOVEFILE_RECURSIVE))
+    _ = nftw(
+      serviceHome, { entry, _, _, _ in entry.map { Darwin.remove($0) } ?? -1 }, 16,
+      FTW_DEPTH | FTW_PHYS)
   }
 }
 

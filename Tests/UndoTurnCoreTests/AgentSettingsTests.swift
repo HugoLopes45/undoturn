@@ -508,7 +508,7 @@ private func shellOutput(_ script: String, in directory: String) throws -> [UInt
     posix_spawn_file_actions_addchdir_np(&actions, directory),
   ]
   try #require(setup.allSatisfy { $0 == 0 }, "\(setup)")
-  let argv = ["/bin/sh", "-c", script].map { strdup($0) } + [nil]
+  let argv = ["/bin/sh", "-c", script].map { (argument: String) in strdup(argument) } + [nil]
   let envp = [strdup("PATH=" + directory), nil]
   defer { for pointer in argv + envp { free(pointer) } }
   var pid: pid_t = 0

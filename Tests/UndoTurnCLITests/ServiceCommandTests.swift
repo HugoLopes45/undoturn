@@ -171,7 +171,10 @@ import UndoTurnCore
     var template = Array("/tmp/bs-XXXXXX".utf8CString)
     guard let homePointer = mkdtemp(&template) else { throw HarnessError("mkdtemp") }
     let home = String(cString: homePointer)
-    defer { _ = home.withCString { removefile($0, nil, removefile_flags_t(REMOVEFILE_RECURSIVE)) } }
+    defer {
+      _ = nftw(
+        home, { entry, _, _, _ in entry.map { Darwin.remove($0) } ?? -1 }, 16, FTW_DEPTH | FTW_PHYS)
+    }
 
     let executable = try undoTurnExecutable()
     let serviceExecutable = parentDirectory(of: executable) + "/undoturn-service"

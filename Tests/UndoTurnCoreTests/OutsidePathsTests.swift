@@ -422,11 +422,9 @@ private struct OutsidePathTree: ~Copyable {
     var retainTemporaryDirectory = false
     defer {
       if !retainTemporaryDirectory {
-        let state = removefile_state_alloc()
-        _ = homePath.withCString {
-          removefile($0, state, removefile_flags_t(REMOVEFILE_RECURSIVE))
-        }
-        removefile_state_free(state)
+        _ = nftw(
+          homePath, { entry, _, _, _ in entry.map { Darwin.remove($0) } ?? -1 }, 16,
+          FTW_DEPTH | FTW_PHYS)
       }
     }
 
@@ -447,9 +445,8 @@ private struct OutsidePathTree: ~Copyable {
   }
 
   deinit {
-    let state = removefile_state_alloc()
-    _ = home.withCString { removefile($0, state, removefile_flags_t(REMOVEFILE_RECURSIVE)) }
-    removefile_state_free(state)
+    _ = nftw(
+      home, { entry, _, _, _ in entry.map { Darwin.remove($0) } ?? -1 }, 16, FTW_DEPTH | FTW_PHYS)
   }
 }
 
