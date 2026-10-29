@@ -6,6 +6,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-29
+
 ### Added
 
 - About UndoTurn names the author, Hugo Lopes, and links to his GitHub account.
@@ -70,5 +72,6 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 Malformed hook commands from the previous quoting bug are not automatically removed. Remove those invalid entries manually before reinstalling hooks.
 
-[unreleased]: https://github.com/HugoLopes45/undoturn/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/HugoLopes45/undoturn/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/HugoLopes45/undoturn/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/HugoLopes45/undoturn/releases/tag/v0.1.0
