@@ -200,39 +200,6 @@ html:not(.js) .reel__window { overflow-x: auto; }
 [data-ui].term .p { color: #8fd18a; }
 [data-ui].term .dim { color: #9a9a9a; }
 
-/* ---------- proof ---------- */
-.proof__h { grid-column: 1 / -1; font-size: var(--step-head); line-height: 1.04; letter-spacing: -0.025em; }
-.proof__h span { display: block; }
-.proof__table { grid-column: 1 / -1; margin-top: 72px; }
-.proof table { width: 100%; border-collapse: collapse; font-size: 18px; line-height: 1.4; }
-.proof th, .proof td { padding: 14px 16px; text-align: left; vertical-align: top; font-weight: 400; }
-.proof thead th { font-size: 16px; font-weight: 600; padding-bottom: 18px; }
-.proof thead th code { white-space: nowrap; }
-.proof tbody tr:nth-child(odd) { background: var(--surface); }
-.proof tbody th { font-weight: 600; }
-.proof .is-us th, .proof .is-us td { font-weight: 700; }
-.proof td:last-child, .proof th:last-child { text-align: right; }
-.proof__note { grid-column: 1 / -1; margin-top: 32px; font-size: 18px; }
-@media (min-width: 48em) {
-  .proof__h { grid-column: 1 / 9; }
-  .proof__h .l2 { padding-left: calc((100% + var(--gutter)) * 2 / 8); }
-  .proof col.c-tool { width: 17%; }
-  .proof col.c-mid { width: 33%; }
-  .proof col.c-end { width: 17%; }
-  .proof__note { grid-column: 3 / 11; }
-  /* The zebra bands reach into the page margin by the cell padding, so the cell text sits on the margins. */
-  .proof table { --bleed: clamp(0px, var(--margin) - 16px, 16px); width: calc(100% + 2 * var(--bleed)); margin-inline: calc(var(--bleed) * -1); }
-}
-@media (max-width: 47.99em) {
-  .proof thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .proof table, .proof tbody, .proof tr, .proof th, .proof td { display: block; }
-  .proof tbody tr { padding: 14px 16px; }
-  .proof th, .proof td { padding: 2px 0; text-align: left; }
-  .proof td:last-child { text-align: left; }
-  .proof tbody th { font-size: 18px; font-weight: 600; padding-bottom: 6px; }
-  .proof td::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 400; }
-}
-
 /* ---------- how it works ---------- */
 .how__grid { align-items: start; }
 .how__text { grid-column: 1 / -1; }
@@ -580,28 +547,6 @@ restored: tests/items.test.ts
 </header>
 
 <main>
-
-<section class="section proof" id="proof" aria-labelledby="proof-h">
-  <div class="wrap grid">
-    <h2 class="proof__h" id="proof-h"><span class="l1" data-reveal>Your safety nets</span><span class="l2" data-reveal style="--i:1">have holes.</span></h2>
-    <div class="proof__table">
-      <table>
-        <caption class="sr-only">How UndoTurn compares with Git, Claude Code checkpoints and Time Machine</caption>
-        <colgroup><col class="c-tool"><col class="c-mid"><col class="c-mid"><col class="c-end"></colgroup>
-        <thead>
-          <tr data-reveal="row" style="--i:2"><th scope="col"><span class="sr-only">Tool</span></th><th scope="col">History at agent boundaries, without manual commits</th><th scope="col">Undoes changes made by shell commands (<code>rm</code>, <code>mv</code>, <code>sed -i</code>)</th><th scope="col">One history for all ten supported agent CLIs</th></tr>
-        </thead>
-        <tbody>
-          <tr data-reveal="row" style="--i:3"><th scope="row">Git</th><td data-label="Agent-boundary history">No, you make the commits</td><td data-label="Shell commands">Only for committed files</td><td data-label="All ten agents">Yes</td></tr>
-          <tr data-reveal="row" style="--i:4"><th scope="row">Claude Code checkpoints</th><td data-label="Agent-boundary history">Yes</td><td data-label="Shell commands">Only for files that Claude also edited with its own tools</td><td data-label="All ten agents">Claude Code only</td></tr>
-          <tr data-reveal="row" style="--i:5"><th scope="row">Time Machine</th><td data-label="Agent-boundary history">No, it runs on a schedule</td><td data-label="Shell commands">Only up to the last backup</td><td data-label="All ten agents">Yes</td></tr>
-          <tr class="is-us" data-reveal="row" style="--i:6"><th scope="row">UndoTurn</th><td data-label="Agent-boundary history">Yes; overlapping sessions share an interval</td><td data-label="Shell commands">Yes</td><td data-label="All ten agents">Yes</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="proof__note" data-reveal style="--i:7">Codex CLI removed its experimental <code>/undo</code> in January 2026 (<a class="link-plain" href="https://github.com/openai/codex/issues/8804">openai/codex#8804</a>). The request to bring it back (<a class="link-plain" href="https://github.com/openai/codex/issues/9203">openai/codex#9203</a>) is still open. UndoTurn gives undo back to Codex, and to all the other agents.</p>
-  </div>
-</section>
 
 <section class="section how" id="how" aria-labelledby="how-h">
   <div class="wrap grid how__grid">

@@ -70,18 +70,6 @@ The agent "cleaned up" by deleting `src/` and `tests/`. One command brought back
 - **Shell commands too.** UndoTurn compares the files themselves, so `rm`, `mv` and `sed -i` are undone like any edit.
 - **Local only.** Everything stays on your Mac. UndoTurn never writes to `.git` and never makes commits.
 
-## The safety nets you have today
-
-Coding agents are fast and confident. Sometimes they are wrong. They delete a folder during a "cleanup". They rewrite the one file that worked. They run `sed -i` across the whole repository.
-
-| | Git | Claude Code checkpoints | Time Machine | **UndoTurn** |
-|---|---|---|---|---|
-| A save point at each prompt, with no action from you | No, you make the commits | Yes | No, it runs on a schedule | **Yes** |
-| Undoes changes made by shell commands (`rm`, `mv`, `sed -i`) | Only for committed files | Only for files that Claude also edited with its own tools | Only up to the last backup | **Yes** |
-| One history for all ten supported agent CLIs | Yes | Claude Code only | Yes | **Yes** |
-
-Codex CLI removed its experimental `/undo` in January 2026 ([openai/codex#8804](https://github.com/openai/codex/issues/8804)). The request to bring it back ([openai/codex#9203](https://github.com/openai/codex/issues/9203)) is still open. UndoTurn gives undo back to Codex, and to all the other agents.
-
 ## Features
 
 <table>
