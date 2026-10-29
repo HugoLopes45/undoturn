@@ -927,7 +927,7 @@ extension Recorder {
   }
 
   private func isUnderUnreadableDirectory(_ path: String, directories: [String]) -> Bool {
-    directories.contains { path.hasPrefix($0.isEmpty ? "" : $0 + "/") }
+    directories.contains { $0.isEmpty || path.utf8.starts(with: ($0 + "/").utf8) }
   }
 
   private func merge(begin: Conversation, stop: Conversation) -> Conversation {

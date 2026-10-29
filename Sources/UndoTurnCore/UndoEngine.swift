@@ -296,9 +296,10 @@ public struct UndoEngine: Sendable {
     journal.files.map { RestoredFile(path: $0.path, outcome: $0.outcome) }
   }
 
-  /// Whether a restore request names `path` or a folder that contains it.
+  /// Whether a restore request names `path` or a folder that contains it. Components compare as
+  /// Strings, so a name typed in another Unicode normalization still matches.
   private func covers(_ request: String, _ path: String) -> Bool {
-    FileSystem.isWithin(path, root: request)
+    FileSystem.pathComponents(path).starts(with: FileSystem.pathComponents(request))
   }
 
   private enum PreparedMove {

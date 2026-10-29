@@ -218,6 +218,27 @@ import Testing
     #expect(node.changes.map(\.path) == ["blocked"])
   }
 
+  @Test func unreadableDirectoryKeepsAChildThatStartsWithACombiningMark() throws {
+    let temporary = try TemporaryDirectory()
+    let root = temporary.path + "/project"
+    let blocked = root + "/blocked"
+    try makeDirectory(blocked)
+    try writeFile(Array("protected".utf8), to: blocked + "/\u{0301}x")
+    let workspace = try Workspace.open(root: root, home: temporary.path + "/home")
+    let recorder = Recorder(workspace: workspace)
+    let lock = try workspace.history.lock()
+    _ = try recorder.beginTurn(Conversation(agent: "codex"), time: 1, lock: lock)
+    let previousVersion = try Mirror.load(from: workspace.mirrorPath)["blocked/\u{0301}x"]
+    #expect(previousVersion != nil)
+    guard chmod(blocked, 0) == 0 else {
+      throw SystemError(operation: "chmod", path: blocked, code: errno)
+    }
+    defer { _ = chmod(blocked, 0o700) }
+
+    _ = try recorder.endTurn(Conversation(agent: "codex"), time: 2, lock: lock)
+    #expect(try Mirror.load(from: workspace.mirrorPath)["blocked/\u{0301}x"] == previousVersion)
+  }
+
   @Test func staleMirrorAfterAppendedNodeDoesNotDuplicateOrLoseChange() throws {
     let temporary = try TemporaryDirectory()
     let root = temporary.path + "/project"

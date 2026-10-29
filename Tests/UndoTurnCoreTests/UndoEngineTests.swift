@@ -1668,6 +1668,29 @@ import Testing
     #expect(try readFile(workspace.mirrorPath) == mirror)
   }
 
+  @Test func restoreFilesMatchesAFolderTypedInAnotherUnicodeNormalization() throws {
+    let temporary = try TemporaryDirectory()
+    let workspace = try makeWorkspace(temporary)
+    let recorded = "Re\u{0301}sume\u{0301}/f"
+    try FileSystem.makeDirectories(workspace.root + "/Re\u{0301}sume\u{0301}", mode: 0o700)
+    try writeFile(workspace.root + "/" + recorded, bytes: Array("made".utf8))
+    let made = try workspace.objects.store(
+      path: workspace.root + "/" + recorded, stat: statKey(workspace.root + "/" + recorded))
+    try workspace.history.append(
+      .node(
+        NodeRecord(
+          id: NodeID(rawValue: 1), parent: NodeID(rawValue: 0), time: 1,
+          conversation: Conversation(agent: "test"),
+          changes: [Change(path: recorded, before: .absent, after: made)], outside: [])))
+    let lock = try workspace.history.lock()
+
+    let report = try UndoEngine(workspace: workspace).restoreFiles(
+      ["R\u{00E9}sum\u{00E9}"], at: NodeID(rawValue: 1), after: false, force: false,
+      dryRun: true, time: 2, lock: lock)
+
+    #expect(report.files.map(\.path) == [recorded])
+  }
+
   @Test func restoringTheOtherVersionOfTheHeadTurnGoesBack() throws {
     let temporary = try TemporaryDirectory()
     let workspace = try makeWorkspace(temporary)
