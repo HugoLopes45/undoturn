@@ -8,7 +8,7 @@ Command examples are recipes; any displayed output is **illustrative**, not a tr
 
 ## Start here
 
-- [Install a locally supplied app](#install).
+- [Install the app](#install).
 - [Try your first undo and redo](#your-first-undo-and-redo) without changing agent settings.
 - [Connect a real agent](#protect-a-project), after reading the safety section below.
 - [Choose a recovery action](#choose-the-right-recovery) after stopping every writer.
@@ -71,12 +71,19 @@ Each [release](https://github.com/HugoLopes45/undoturn/releases) has:
 | `undoturn-macos-universal.tar.gz` | The CLI and the service only |
 | `SHA256SUMS` | The SHA-256 of each file |
 
-The files are universal, signed with a Developer ID and notarized by Apple. Each file also has a [build provenance attestation](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations). To check a download:
+The app and CLI archive are universal, signed with a Developer ID and notarized by Apple. Download `SHA256SUMS` from the same release, place it beside your download, then check it:
 
 ```sh
 shasum -a 256 -c SHA256SUMS --ignore-missing
+```
+
+Releases built by GitHub Actions also include a [build provenance attestation](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations). Their release notes identify that build method. For those releases, you can also run:
+
+```sh
 gh attestation verify UndoTurn.dmg --repo HugoLopes45/undoturn
 ```
+
+Locally built releases have Apple signing and notarization, but no GitHub build attestation. A checksum detects a changed download; it does not authenticate the publisher.
 
 Then install the DMG as described below, or extract the archive and copy `undoturn` and `undoturn-service` to the same stable folder, for example `~/.local/bin`.
 

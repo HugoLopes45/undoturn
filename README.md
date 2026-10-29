@@ -29,7 +29,7 @@
   <img src="https://img.shields.io/github/v/release/HugoLopes45/undoturn?style=for-the-badge&label=%E2%AC%87%EF%B8%8F%20%20CLI%20only&labelColor=070707&color=2a9d8f&cacheSeconds=300" alt="Download the latest UndoTurn command-line tools (.tar.gz)" height="40">
 </a>
 
-<sub>macOS 14 or later &nbsp;·&nbsp; universal: Apple silicon and Intel &nbsp;·&nbsp; signed and notarized &nbsp;·&nbsp; [all releases](https://github.com/HugoLopes45/undoturn/releases)</sub>
+<sub>macOS 14 or later &nbsp;·&nbsp; [all releases](https://github.com/HugoLopes45/undoturn/releases)</sub>
 
 <br>
 <br>
@@ -174,21 +174,26 @@ Requirements: macOS 14 or later.
 | **App** (menu bar app, CLI and service) | [UndoTurn.dmg](https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg) | Drag **UndoTurn** to **Applications**, eject the DMG and open the app. For terminal access, choose **Install Command-Line Tools…** in its menu. No separate CLI download is needed. |
 | **CLI only** (CLI and service) | [undoturn-macos-universal.tar.gz](https://github.com/HugoLopes45/undoturn/releases/latest/download/undoturn-macos-universal.tar.gz) | See the commands below. |
 
-Both downloads are universal (Apple silicon and Intel), signed with a Developer ID and notarized by Apple. Each release has a `SHA256SUMS` file and a GitHub build provenance attestation.
+For download checks and help with macOS security prompts, see the [installation guide](docs/GUIDE.md#download-a-release).
 
-To install the CLI only:
+With the app, read [Before you record](docs/GUIDE.md#before-you-record), then choose **Install Agent Hooks…** and select a project. Terminal access is optional.
+
+<details>
+<summary>Install the CLI without the app</summary>
 
 ```sh
 curl -fLO https://github.com/HugoLopes45/undoturn/releases/latest/download/undoturn-macos-universal.tar.gz
 curl -fLO https://github.com/HugoLopes45/undoturn/releases/latest/download/SHA256SUMS
 shasum -a 256 -c SHA256SUMS --ignore-missing
-gh attestation verify undoturn-macos-universal.tar.gz --repo HugoLopes45/undoturn  # optional
 tar -xzf undoturn-macos-universal.tar.gz
 mkdir -p ~/.local/bin
 cp undoturn-*-macos-universal/undoturn undoturn-*-macos-universal/undoturn-service ~/.local/bin/
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 Hooks store the absolute path of the CLI. Install it in a stable location before `init`, and keep `undoturn-service` beside it.
+
+</details>
 
 <details>
 <summary>Build from source</summary>
@@ -201,9 +206,10 @@ cd undoturn
 swift build -c release
 mkdir -p ~/.local/bin
 cp .build/release/undoturn .build/release/undoturn-service ~/.local/bin/
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-To build a local app installer: `sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg`. The app and bundled helpers are universal and ad-hoc signed; the DMG is unsigned and not notarized. Use a fresh output path for another build.
+To build a local app installer: `sh scripts/package-app.sh .build/dist/UndoTurn-local.dmg`. Without `UNDOTURN_SIGN_IDENTITY`, the app and helpers are ad-hoc signed and the DMG is unsigned. This script does not notarize either build. Use a fresh output path for another build.
 
 </details>
 
@@ -213,7 +219,7 @@ Then run `init` once, in a project:
 
 ```console
 $ cd ~/code/web-app
-$ ~/.local/bin/undoturn init
+$ undoturn init
 claude: installed
 codex: installed
 Open Codex and run /hooks once to trust the UndoTurn hook.

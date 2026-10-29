@@ -30,7 +30,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Claude Code, Codex, Gemini and Cursor pre-tool hooks gate recognized destructive commands and create pre-command checkpoints without losing active participants or outside watches.
 - Native file/folder Before and After recovery includes previews and per-file results. Selective turn revert is separate from history navigation; native recovery refuses active recording.
 - The app can install agent hooks, run setup diagnostics, and show hook failures recorded within the last 24 hours.
-- Local packaging scripts produce an unsigned DMG that contains an ad-hoc signed app and bundled CLI/service helpers, plus a SHA-256 sidecar. Developer ID signing and notarization remain outside this build.
+- Signed and notarized universal macOS releases include the app DMG, an optional CLI archive and `SHA256SUMS` on GitHub Releases. The app bundles both command-line tools.
 - A browser user guide, `docs/guide.html`, generated from `docs/GUIDE.md` by `scripts/build-docs.sh`.
 
 ### Fixed

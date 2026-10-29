@@ -65,10 +65,32 @@ For maintainers:
 
 1. Choose the version by Semantic Versioning. Before 1.0.0, a breaking change increments the minor version.
 2. On a branch, set the version in `Sources/UndoTurnCore/UndoTurnVersion.swift`. Then run `sh scripts/changelog.sh release X.Y.Z`. It moves `Unreleased` into a release dated today and updates the compare links.
-3. Merge the pull request into `main`.
-4. On the same UTC day, tag the merge commit: `git tag -a vX.Y.Z -m "UndoTurn X.Y.Z"`, then `git push origin vX.Y.Z`.
-5. The Release workflow checks the tag, the version and the changelog. It builds, signs and notarizes the artifacts, then opens a draft release. The release notes come from `sh scripts/changelog.sh notes X.Y.Z`.
-6. Read the draft, then publish it.
+3. Merge the pull request into `main`. Build from that clean commit.
+4. With a Developer ID Application identity and an existing notarytool Keychain profile, build locally:
+
+   ```sh
+   export UNDOTURN_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+   export UNDOTURN_NOTARY_PROFILE="your-notary-profile"
+   sh scripts/release.sh
+   ```
+
+5. Check `SHA256SUMS` in `.build/release-artifacts/X.Y.Z`, install the DMG and exercise the app and bundled CLI. The three release assets are `UndoTurn.dmg`, `undoturn-macos-universal.tar.gz` and `SHA256SUMS`. Keep binaries out of Git history.
+6. Tag the validated commit: `git tag -a vX.Y.Z -m "UndoTurn X.Y.Z"`, then `git push origin main vX.Y.Z`.
+7. Create a draft with the changelog notes and the three files:
+
+   ```sh
+   sh scripts/changelog.sh notes X.Y.Z > .build/release-notes.md
+   gh release create vX.Y.Z --draft --verify-tag --title "UndoTurn X.Y.Z" \
+     --notes-file .build/release-notes.md \
+     .build/release-artifacts/X.Y.Z/UndoTurn.dmg \
+     .build/release-artifacts/X.Y.Z/undoturn-macos-universal.tar.gz \
+     .build/release-artifacts/X.Y.Z/SHA256SUMS
+   ```
+
+8. State the build commit and whether the build was local or GitHub-hosted in the release notes. Local builds do not have GitHub provenance attestations.
+9. Check the draft and its downloads, then publish it: `gh release edit vX.Y.Z --draft=false --latest`.
+
+To build on GitHub instead, configure the `release` environment with `DEVELOPER_ID_P12_BASE64`, `DEVELOPER_ID_P12_PASSWORD`, `NOTARY_KEY_P8_BASE64`, `NOTARY_KEY_ID` and `NOTARY_ISSUER_ID`. Run `gh workflow run release.yml --ref vX.Y.Z` on the changelog's UTC release date. The manual workflow checks the tag, builds, tests, signs, notarizes and attests the same three assets, then creates the draft. Do not run both publication paths for the same tag.
 
 ## License of contributions
 

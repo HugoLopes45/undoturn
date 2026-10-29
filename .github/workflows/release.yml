@@ -1,10 +1,9 @@
 name: Release
 
-# A version tag builds, signs, notarizes and attests the artifacts, then opens a draft release.
-# A maintainer publishes the draft by hand.
+# Run explicitly on a version tag when signing credentials are configured in the release environment.
+# Local signing uses scripts/release.sh without exporting keys to GitHub.
 on:
-  push:
-    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch:
 
 permissions: {}
 
@@ -32,6 +31,7 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
+          [ "$GITHUB_REF_TYPE" = tag ] || { echo "::error::run this workflow on a version tag"; exit 1; }
           version=$(sed -n 's/.*current = "\([^"]*\)".*/\1/p' Sources/UndoTurnCore/UndoTurnVersion.swift)
           [ "$TAG" = "v$version" ] || { echo "::error::tag $TAG does not match version $version"; exit 1; }
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::tag $TAG is not on main"; exit 1; }
@@ -74,8 +74,8 @@ jobs:
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
-            .build/release-artifacts/${{ steps.version.outputs.version }}/UndoTurn-*.dmg
-            .build/release-artifacts/${{ steps.version.outputs.version }}/undoturn-*.tar.gz
+            .build/release-artifacts/${{ steps.version.outputs.version }}/UndoTurn.dmg
+            .build/release-artifacts/${{ steps.version.outputs.version }}/undoturn-macos-universal.tar.gz
       - name: Draft the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -83,14 +83,11 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           sh scripts/changelog.sh notes "$VERSION" >"$RUNNER_TEMP/notes.md"
+          printf '\nBuilt by GitHub Actions with build provenance attestations.\n' >>"$RUNNER_TEMP/notes.md"
           dist=".build/release-artifacts/$VERSION"
-          # Stable names keep the README links to releases/latest/download/ valid for every version.
-          cp "$dist/UndoTurn-$VERSION.dmg" "$dist/UndoTurn.dmg"
-          cp "$dist/undoturn-$VERSION-macos-universal.tar.gz" "$dist/undoturn-macos-universal.tar.gz"
-          (cd "$dist" && shasum -a 256 UndoTurn.dmg undoturn-macos-universal.tar.gz >>SHA256SUMS)
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
             --title "UndoTurn $VERSION" --notes-file "$RUNNER_TEMP/notes.md" \
-            "$dist"/UndoTurn*.dmg "$dist"/undoturn-*.tar.gz "$dist/SHA256SUMS"
+            "$dist/UndoTurn.dmg" "$dist/undoturn-macos-universal.tar.gz" "$dist/SHA256SUMS"
       - name: Remove the signing keychain
         if: always()
         run: security delete-keychain "$RUNNER_TEMP/release.keychain-db" || true

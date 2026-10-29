@@ -60,7 +60,7 @@ notarize "$work/UndoTurn.zip"
 xcrun stapler staple "$app"
 spctl --assess --type execute -vv "$app"
 
-dmg="$dist/UndoTurn-$version.dmg"
+dmg="$dist/UndoTurn.dmg"
 mkdir "$work/dmg"
 ditto "$app" "$work/dmg/UndoTurn.app"
 ln -s /Applications "$work/dmg/Applications"
@@ -75,9 +75,9 @@ sh scripts/build-release.sh
 cli="undoturn-$version-macos-universal"
 ditto -c -k --keepParent ".build/dist/$cli" "$work/cli.zip"
 notarize "$work/cli.zip"
-cp ".build/dist/$cli.tar.gz" "$dist/"
+cp ".build/dist/$cli.tar.gz" "$dist/undoturn-macos-universal.tar.gz"
 
-(cd "$dist" && shasum -a 256 "UndoTurn-$version.dmg" "$cli.tar.gz" >SHA256SUMS)
+(cd "$dist" && shasum -a 256 UndoTurn.dmg undoturn-macos-universal.tar.gz >SHA256SUMS)
 cat "$dist/SHA256SUMS"
 echo "Release artifacts: $dist"
 echo "Intermediate files: $work"
