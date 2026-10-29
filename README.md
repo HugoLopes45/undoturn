@@ -171,7 +171,7 @@ Requirements: macOS 14 or later.
 
 | | Download | Install |
 |---|---|---|
-| **App** (menu bar app, CLI and service) | [UndoTurn.dmg](https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg) | Open the DMG and drag **UndoTurn** to **Applications**. The CLI is at `/Applications/UndoTurn.app/Contents/Helpers/undoturn`. |
+| **App** (menu bar app, CLI and service) | [UndoTurn.dmg](https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg) | Drag **UndoTurn** to **Applications**, eject the DMG and open the app. For terminal access, choose **Install Command-Line Tools…** in its menu. No separate CLI download is needed. |
 | **CLI only** (CLI and service) | [undoturn-macos-universal.tar.gz](https://github.com/HugoLopes45/undoturn/releases/latest/download/undoturn-macos-universal.tar.gz) | See the commands below. |
 
 Both downloads are universal (Apple silicon and Intel), signed with a Developer ID and notarized by Apple. Each release has a `SHA256SUMS` file and a GitHub build provenance attestation.
@@ -241,6 +241,8 @@ undoturn undo
 The app bundles the CLI and the service. The CLI and the app use the same engine and history.
 
 On an empty timeline, choose **Install Agent Hooks…** to select a project. Setup uses the bundled CLI, not your shell's `PATH`.
+
+For terminal access, choose **Install Command-Line Tools…**, then select a writable folder on your shell's `PATH`. This creates links to both bundled tools without replacing existing files or changing shell settings. Keep the app in its installed location; moving or deleting it breaks the links. If the chosen folder is not on `PATH`, use the full CLI path or add that folder yourself.
 
 - Undo and redo for each project from the menu bar. `⌘Z` and `⇧⌘Z` work in the timeline. In the menu, they act on the first listed project that can undo, or redo when no turn is running there.
 - A timeline of prompts, labels, changed files and line diffs, with shared participant identities and recording status.

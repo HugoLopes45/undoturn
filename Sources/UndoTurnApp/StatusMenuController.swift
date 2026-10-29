@@ -210,6 +210,11 @@ import UndoTurnLedger
     addAction(.agentSetup(.check), to: checkItem, targets: &menuActionTargets)
     checkItem.isEnabled = !agentSetup.isBusy
     menu.addItem(checkItem)
+    let toolsItem = NSMenuItem(
+      title: "Install Command-Line Tools…", action: nil, keyEquivalent: "")
+    addAction(.agentSetup(.installCommandLineTools), to: toolsItem, targets: &menuActionTargets)
+    toolsItem.isEnabled = !agentSetup.isBusy
+    menu.addItem(toolsItem)
   }
 
   private func addHookFailureWarning(now: Int64) {

@@ -222,7 +222,15 @@ gh attestation verify UndoTurn.dmg --repo HugoLopes45/undoturn</code></pre>
 <p>The installed app contains both helpers:</p>
 <pre class="text" tabindex="0"><code>/Applications/UndoTurn.app/Contents/Helpers/undoturn
 /Applications/UndoTurn.app/Contents/Helpers/undoturn-service</code></pre>
-<p>You do not need to change <code>PATH</code>. In Terminal, use a quoted absolute path:</p>
+<p>To make the bundled tools available in Terminal:</p>
+<ol type="1">
+<li>Open the installed app from <strong>Applications</strong>, not the mounted DMG.</li>
+<li>Choose <strong>Install Command-Line Tools…</strong> in UndoTurn's menu.</li>
+<li>Select a writable folder on your shell's <code>PATH</code>, such as <code>~/.local/bin</code> if you already configured it.</li>
+</ol>
+<p>The app creates links named <code>undoturn</code> and <code>undoturn-service</code>. Existing files are not replaced; selecting the same folder again keeps matching links. This action does not install agent hooks, start the service or change shell settings.</p>
+<p>Keep the app in its installed location. Replacing it there updates the linked tools; moving or deleting it breaks the links. If the chosen folder is not on <code>PATH</code>, add it yourself or use the absolute path below.</p>
+<p>You can also use the bundled CLI directly without installing links or changing <code>PATH</code>:</p>
 <pre class="sh" tabindex="0"><code>UT=&quot;/Applications/UndoTurn.app/Contents/Helpers/undoturn&quot;
 &quot;$UT&quot; --version
 &quot;$UT&quot; --help</code></pre>
@@ -642,6 +650,7 @@ undoturn resume</code></pre>
 <li>Recent turns open their timeline details. The menu includes every project with a running turn and at most three other projects active in the last seven days. Others are in <strong>More Projects</strong>.</li>
 <li><strong>Open Timeline</strong> (<code>⌘T</code>) opens the history browser.</li>
 <li><strong>Manage Storage…</strong>, <strong>Install Agent Hooks…</strong>, and <strong>Check Recording Setup…</strong> manage data and setup. The last two invoke the bundled CLI, not a command found through <code>PATH</code>.</li>
+<li><strong>Install Command-Line Tools…</strong> links both bundled tools into a folder you choose. See <a href="#use-the-bundled-cli">Use the bundled CLI</a>.</li>
 <li><strong>Pause Recording</strong> becomes <strong>Resume Recording</strong> when paused.</li>
 <li><strong>Open at Login</strong> controls the app's login item. It is separate from the optional launchd service.</li>
 <li><strong>About UndoTurn</strong> and <strong>Quit UndoTurn</strong> are at the bottom.</li>
@@ -798,7 +807,7 @@ undoturn undo --dry-run --json</code></pre>
 </tr>
 <tr>
 <td><code>undoturn: command not found</code></td>
-<td>Use <code>/Applications/UndoTurn.app/Contents/Helpers/undoturn</code> by its quoted absolute path. App setup does not install a shell <code>PATH</code> entry.</td>
+<td>Choose <strong>Install Command-Line Tools…</strong> and select a writable folder already on your shell's <code>PATH</code>. The app does not change <code>PATH</code>. Alternatively, use <code>/Applications/UndoTurn.app/Contents/Helpers/undoturn</code> by its quoted absolute path.</td>
 </tr>
 <tr>
 <td>macOS blocks the app</td>
@@ -892,7 +901,7 @@ undoturn undo --dry-run --json</code></pre>
 &quot;$UT&quot; service uninstall</code></pre>
 <p><code>uninstall --agent &lt;name&gt;</code> removes only one integration, not the entire setup. A successful <code>service uninstall</code> does not confirm that the service process stopped; check Activity Monitor for <code>undoturn-service</code>. Exit/restart agents that may still have a generated extension loaded. Remove any MCP registration you added through that client's own configuration controls; <code>undoturn uninstall</code> does not remove MCP server entries.</p></li>
 <li><p>Decide whether to <strong>keep history</strong>. Keeping the store is the default; reinstalling binaries does not itself erase it. For deliberate deletion, use <strong>Manage Storage… → Delete History… / Delete All History…</strong>, or list and remove individual roots with <code>storage remove</code> while the CLI is present. Deletion is permanent from UndoTurn's perspective and does not change project files. Do not delete a journal whose interrupted recovery you still need.</p></li>
-<li><p>Choose <strong>Quit UndoTurn</strong>, then move <code>/Applications/UndoTurn.app</code> to the Trash. Remove only CLI/service copies or links that you installed separately, such as those in <code>~/.local/bin</code>; do not remove unrelated tools.</p></li>
+<li><p>Choose <strong>Quit UndoTurn</strong>, then move <code>/Applications/UndoTurn.app</code> to the Trash. Remove the <code>undoturn</code> and <code>undoturn-service</code> links from the folder you chose in <strong>Install Command-Line Tools…</strong>. Remove only CLI/service copies or links you installed; do not remove unrelated tools.</p></li>
 </ol>
 <p>If you intentionally want to remove all remaining local data after those steps, inspect the known default store or your chosen custom store and move that exact folder to the Trash. This also removes diagnostic logs and residual store state. Do not confuse it with a project folder, and do not use broad recursive deletion commands copied from an example.</p>
 <p>Full settings backups beside agent configuration can remain after uninstall and may contain sensitive settings. Review their names before removing them. Do not restore a whole old backup over newer unrelated agent configuration. Copies in Time Machine or other backups are outside UndoTurn's deletion controls.</p>

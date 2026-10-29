@@ -10,6 +10,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Install the bundled CLI and service links from **Install Command-Line Tools…** in the app, choosing a writable folder without a separate download or automatic shell changes.
 - Agents can inspect and restore history through `undoturn mcp`, a stdio MCP server. Moves retain conflict protection and never force writes (ADR 0036).
 - `undoturn storage` lists stored histories and reclaimable space; `storage remove <root>` deletes one history without touching project files. Both support JSON.
 - `undoturn restore <path…> --at <id>` restores selected files or folders without moving history; `--after` selects the state after the turn. History moves and file restoration support `--dry-run` (ADR 0037).

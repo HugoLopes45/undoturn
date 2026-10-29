@@ -1,11 +1,11 @@
 import AppKit
 import Observation
 
-/// Explicit, local setup actions delegated to the bundled CLI's existing commands.
 @MainActor @Observable final class AgentSetupController {
   enum Action {
     case install
     case check
+    case installCommandLineTools
   }
 
   private let store: LedgerStore
@@ -18,6 +18,39 @@ import Observation
     switch action {
     case .install: install()
     case .check: check()
+    case .installCommandLineTools: installCommandLineTools()
+    }
+  }
+
+  private func installCommandLineTools() {
+    guard !isBusy else { return }
+    let panel = NSOpenPanel()
+    panel.title = "Install Command-Line Tools"
+    panel.message =
+      "Choose a writable folder on your PATH.\n"
+      + "Creates links to both bundled tools. Existing files and shell settings stay unchanged."
+    panel.prompt = "Install Tools"
+    panel.canChooseDirectories = true
+    panel.canChooseFiles = false
+    panel.allowsMultipleSelection = false
+    panel.canCreateDirectories = true
+    panel.showsHiddenFiles = true
+    panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+    NSApp.activate()
+    guard panel.runModal() == .OK, let directory = panel.url else { return }
+    do {
+      try BundledUndoTurn.install(in: directory)
+      let alert = NSAlert()
+      alert.messageText = "Command-Line Tools Installed"
+      alert.informativeText =
+        "Links to undoturn and undoturn-service are installed in:\n\(directory.path)\n\n"
+        + "If this folder is on your shell's PATH, run undoturn --version in Terminal. "
+        + "Otherwise, use the full path or add this folder to PATH yourself.\n\n"
+        + "Keep UndoTurn at \(Bundle.main.bundleURL.path). Moving or removing the app breaks these links. "
+        + "Agent hooks are installed separately with Install Agent Hooks…"
+      alert.runModal()
+    } catch {
+      NSAlert(error: error).runModal()
     }
   }
 
@@ -117,6 +150,48 @@ private struct BundledCommandResult: Sendable {
 }
 
 private enum BundledUndoTurn {
+  static func install(in directory: URL) throws {
+    let volume = try Bundle.main.bundleURL.resourceValues(forKeys: [.volumeIsReadOnlyKey])
+    guard volume.volumeIsReadOnly == false else {
+      throw CocoaError(
+        .fileWriteVolumeReadOnly,
+        userInfo: [
+          NSLocalizedDescriptionKey:
+            "Move UndoTurn to Applications, eject the disk image, and open the installed app first."
+        ])
+    }
+    let serviceCreated = try installLink("undoturn-service", in: directory)
+    do {
+      _ = try installLink("undoturn", in: directory)
+    } catch {
+      if serviceCreated {
+        try FileManager.default.removeItem(
+          at: directory.appendingPathComponent("undoturn-service"))
+      }
+      throw error
+    }
+  }
+
+  private static func installLink(_ name: String, in directory: URL) throws -> Bool {
+    let fileManager = FileManager.default
+    let source = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/\(name)")
+    guard fileManager.isExecutableFile(atPath: source.path) else {
+      throw CocoaError(
+        .fileReadNoSuchFile,
+        userInfo: [
+          NSFilePathErrorKey: source.path,
+          NSLocalizedDescriptionKey:
+            "A bundled tool is missing or not executable. Reinstall UndoTurn.",
+        ])
+    }
+    let destination = directory.appendingPathComponent(name)
+    if (try? fileManager.destinationOfSymbolicLink(atPath: destination.path)) == source.path {
+      return false
+    }
+    try fileManager.createSymbolicLink(at: destination, withDestinationURL: source)
+    return true
+  }
+
   static func run(arguments: [String], directory: URL) async -> BundledCommandResult {
     let executable = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/undoturn")
     return await Task.detached(priority: .userInitiated) {
