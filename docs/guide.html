@@ -79,7 +79,7 @@
       </nav>
     </details>
 <p>UndoTurn records local file changes around coding-agent turns so you can inspect them and recover recorded versions. The app is called <strong>UndoTurn</strong> and its command is <strong><code>undoturn</code></strong>.</p>
-<p><strong>Pre-release, local builds only.</strong> This handbook does not announce a public release. The local packaging scripts produce an unsigned DMG containing an ad-hoc-signed app, without Developer ID signing or notarization. Recording is not a protection guarantee, a sandbox, or a replacement for Git and an independent backup.</p>
+<p>Recording is not a protection guarantee, a sandbox, or a replacement for Git and an independent backup.</p>
 <p>Command examples are recipes; any displayed output is <strong>illustrative</strong>, not a transcript of a verified installation. Turn numbers, times, and available client features depend on your installation.</p>
 <h2 id="start-here"><a href="#start-here">Start here</a></h2>
 <ul>
@@ -206,7 +206,7 @@ gh attestation verify UndoTurn.dmg --repo HugoLopes45/undoturn</code></pre>
 <li>For a local DMG, confirm who built the image and that it is intended for your Mac. If a <code>.sha256</code> file was supplied, compare it with the DMG before opening it. A checksum checks bytes; it does not establish the builder's identity.</li>
 <li>Open the DMG in Finder. Drag <strong>UndoTurn.app</strong> to <strong>Applications</strong>.</li>
 <li>Eject the image. Launch <code>/Applications/UndoTurn.app</code>, not the copy still on the mounted image.</li>
-<li>Look for UndoTurn in the macOS menu bar. <strong>It has no Dock icon while its timeline is closed.</strong> On a first launch with no projects, the app opens the empty timeline; reopening the installed app also opens the timeline. While the timeline is open, UndoTurn also shows in the Dock.</li>
+<li>Look for UndoTurn in the macOS menu bar. <strong>It has no Dock icon while its timeline and storage windows are closed.</strong> On a first launch with no projects, the app opens the empty timeline; reopening the installed app also opens the timeline. While the timeline or storage window is open, UndoTurn also shows in the Dock.</li>
 <li>If the icon is hidden near the notch or by a menu bar utility, make room in the menu bar or reopen the app from Applications. See <a href="#troubleshooting">Troubleshooting</a>.</li>
 </ol>
 <p>Installing or opening the app is separate from installing agent hooks. You can complete the isolated drill below before choosing <strong>Install Agent Hooks…</strong>.</p>
@@ -642,7 +642,7 @@ undoturn restore config.json --at 12 --after --dry-run --json</code></pre>
 undoturn resume</code></pre>
 <p>Pause applies to <strong>all projects in that store</strong>. Hooks start no new turns and register no new projects while paused. A turn that began before the pause is still recorded when it stops. Pause neither stops agents nor erases existing data. Resume explicitly, then confirm the state in doctor or the menu bar app.</p>
 <h2 id="the-menu-bar-app"><a href="#the-menu-bar-app">The menu bar app</a></h2>
-<p>UndoTurn runs in the menu bar. It shows in the Dock only while its timeline is open. The app displays the store it was launched with. CLI helpers and installed agent hooks perform recording; quitting the UI does not uninstall hooks or the separate service, but notifications require the app to be running.</p>
+<p>UndoTurn runs in the menu bar. It shows in the Dock only while its timeline or storage window is open. The app displays the store it was launched with. CLI helpers and installed agent hooks perform recording; quitting the UI does not uninstall hooks or the separate service, but notifications require the app to be running.</p>
 <h3 id="the-menu"><a href="#the-menu">The menu</a></h3>
 <p>Click the UndoTurn menu bar icon:</p>
 <ul>
