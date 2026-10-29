@@ -54,6 +54,9 @@ git add -A
 git -c user.name=drill -c user.email=drill@example.invalid commit -q -m seed
 printf '// work in progress, not committed\n' >>src/app.ts
 printf 'draft\n' >notes.md
+# A turn that starts in the second of `git init` treats ignore rules as changed, and then it keeps
+# files moved during the turn out of the turn.
+sleep 1
 
 digest() {
   find . -path ./.git -prune -o -type f -print0 | LC_ALL=C sort -z | xargs -0 shasum -a 256 | shasum -a 256 | cut -c1-16
@@ -163,6 +166,7 @@ run_turn() {
         -c "hooks.UserPromptSubmit=$handler" -c "hooks.Stop=$handler" \
         -c "hooks.PreToolUse=[{matcher=\"Bash\",hooks=[{type=\"command\",command=\"$hook\"}]}]" \
         -c "mcp_servers.undoturn.command=\"$root/mcp.sh\"" \
+        -c 'mcp_servers.undoturn.enabled_tools=["undo"]' \
         -c 'mcp_servers.undoturn.tools.undo.approval_mode="approve"' \
         "$1"
       ;;
