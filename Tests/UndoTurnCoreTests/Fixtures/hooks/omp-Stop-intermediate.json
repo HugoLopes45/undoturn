@@ -1,0 +1,6 @@
+{
+  "hook_event_name": "Stop",
+  "session_id": "00000000-0000-4000-8000-000000000002",
+  "cwd": "/tmp/probe/project",
+  "model": "anthropic/claude-opus-5-5"
+}

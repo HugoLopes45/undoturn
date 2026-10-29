@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UndoTurn: undo for coding agents on macOS</title>
+<meta name="description" content="UndoTurn records your files at each coding-agent prompt and puts them back with one command or one click. For Claude Code, Codex CLI and eight other agent CLIs, on macOS.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:title" content="UndoTurn: local history for coding agents">
+<meta property="og:description" content="Undo for coding agents on macOS. One command. One click.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://hugolopes45.github.io/undoturn/images/timeline-light.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="images/icon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f4f4f4;
+  --ink: #111111;
+  --muted: #6b6b6b;
+  --accent: #0063e1;
+  --accent-strong: #0050b8;
+  --accent-ink: #ffffff;
+  --field: #111111;
+  --field-ink: #f4f4f4;
+  --field-muted: #a3a3a3;
+
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+
+  --step-small: 0.875rem;
+  --step-body: 1.125rem;
+  --step-lead: clamp(1.375rem, 1.1rem + 0.8vw, 1.75rem);
+  --step-head: clamp(2rem, 1.2rem + 3vw, 3.5rem);
+  --step-display: clamp(3.5rem, 1rem + 6.5vw, 7rem);
+
+  --margin: clamp(1rem, 2.2vw, 2rem);
+  --gutter: clamp(1rem, 2vw, 2rem);
+  --section: clamp(7.5rem, 12vw, 15rem);
+  --radius: 4px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  --t-press: 140ms;
+  --t-hover: 180ms;
+  --t-ui: 240ms;
+}
+
+/* reset */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: var(--step-body); line-height: 1.5; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+h1, h2, h3, p, figure, ul, ol, dl, dd { margin: 0; }
+ul[class], ol[class] { padding: 0; list-style: none; }
+img, svg { display: block; max-width: 100%; }
+img { height: auto; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; }
+:target { scroll-margin-top: 2rem; }
+::selection { background: var(--accent); color: var(--accent-ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+h1, h2, h3 { font-weight: 500; text-wrap: balance; }
+p { max-width: 62ch; text-wrap: pretty; }
+pre, code, kbd { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.89em; }
+:where(p, figcaption) code { white-space: nowrap; }
+code.path { white-space: normal; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* layout */
+.wrap { padding-inline: var(--margin); }
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); }
+.section { padding-block: calc(var(--section) / 2); }
+.head { font-size: var(--step-head); line-height: 1.04; letter-spacing: -0.025em; }
+.lead { font-size: var(--step-lead); line-height: 1.3; letter-spacing: -0.01em; }
+.muted { color: var(--muted); }
+
+/* controls */
+.button { display: inline-flex; align-items: center; justify-content: center; min-height: 3rem; padding: 0 1.4rem; background: var(--accent); color: var(--accent-ink); border-radius: var(--radius); text-decoration: none; white-space: nowrap; font-weight: 500; transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease; }
+.button:active { transform: scale(0.97); }
+.button--small { min-height: 2.5rem; padding: 0 1rem; font-size: 16px; }
+.link { text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 0.2em; text-decoration-thickness: 0.07em; transition: text-decoration-color var(--t-hover) ease, color var(--t-hover) ease; }
+.link-plain { color: var(--accent); text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 0.07em; }
+.ctl { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; min-width: 2.75rem; padding: 0 1rem; border-radius: var(--radius); background: var(--surface); font-size: 16px; transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease, opacity var(--t-hover) ease; }
+.ctl:active { transform: scale(0.96); }
+.ctl:disabled { opacity: 0.45; cursor: default; }
+@media (hover: hover) and (pointer: fine) {
+  .button:hover { background-color: var(--accent-strong); }
+  .link:hover { text-decoration-color: currentColor; }
+  .link-plain:hover { color: var(--accent-strong); }
+  .ctl:not(:disabled):hover { background-color: #e6e6e6; }
+  .showcase .ctl:not(:disabled):hover { background-color: #333333; }
+}
+
+/* ---------- hero ---------- */
+.hero { position: relative; }
+.hero__stage { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 20px; padding: 14px var(--margin) 40px; min-height: 100svh; align-content: start; }
+.nav { display: flex; align-items: center; gap: 24px; min-height: 52px; }
+.wordmark { display: inline-flex; align-items: center; gap: 10px; margin-right: auto; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none; }
+.wordmark img { width: 30px; height: 30px; }
+.nav__links { display: none; gap: 24px; font-size: 16px; }
+.nav__links a { text-decoration-line: underline; }
+.hero__title { font-size: clamp(2.5rem, 9.4vw, 4.75rem); line-height: 1.02; letter-spacing: -0.035em; font-weight: 500; }
+.lines .line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.lines [data-line] { display: block; }
+.half [data-line] { white-space: nowrap; }
+.half--b { text-align: right; }
+.reel { --sliver: 14px; --gap: 10px; container-type: inline-size; --fw: calc(100cqw - 2 * var(--margin) - 2 * (var(--sliver) + var(--gap))); margin-inline: calc(var(--margin) * -1); overflow: hidden; }
+html:not(.js) .reel__window { overflow-x: auto; }
+.js .reel__window { touch-action: pan-y pinch-zoom; }
+.reel__track { display: flex; gap: var(--gap); padding-inline: calc(var(--margin) + var(--sliver) + var(--gap)); transform: translate3d(calc(var(--pos, 0) * -1 * (var(--fw) + var(--gap))), 0, 0); }
+.frame { flex: 0 0 var(--fw); min-width: 0; }
+.frame__box { position: relative; aspect-ratio: 4 / 3; container-type: inline-size; border-radius: var(--radius); background: var(--surface); }
+.frame__in { position: absolute; left: 6%; right: 6%; top: 50%; transform: translateY(-50%); aspect-ratio: 16 / 10; }
+@media (max-width: 47.99em) { .frame__in--tall { aspect-ratio: 4 / 3; } }
+.shot { overflow: hidden; border-radius: var(--radius); }
+.shot img { width: calc(var(--iw, 960) / var(--w) * 100%); max-width: none; }
+.frame figcaption { margin-top: 12px; font-size: var(--step-small); color: var(--muted); }
+.js .frame figcaption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.reel__foot { padding-inline: calc(var(--margin) + var(--sliver) + var(--gap)); }
+.reel__caption { display: none; margin-top: 12px; font-size: var(--step-small); color: var(--muted); }
+.js .reel__caption { display: block; }
+.reel__controls { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.reel__count { font-size: var(--step-small); color: var(--muted); font-variant-numeric: tabular-nums; margin-left: 8px; }
+.hero__act { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+.hero__sentence { max-width: 30ch; }
+
+@media (min-width: 48em) {
+  .nav__links { display: flex; }
+  .reel { --sliver: 32px; --gap: 16px; }
+}
+@media (min-width: 75em) {
+  .hero__stage { height: 100svh; min-height: 640px; grid-template-columns: minmax(0, 0.9fr) var(--reel) minmax(0, 1fr); grid-template-rows: auto 1fr auto; column-gap: var(--gutter); row-gap: 0; padding-bottom: 32px; --reel: clamp(480px, min(46vw, (100svh - 360px) * 4 / 3 + 112px), 800px); }
+  .nav { grid-column: 1 / -1; }
+  .hero__title { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: subgrid; align-self: center; font-size: clamp(2.75rem, 5vw - 1rem, 4.5rem); }
+  .half--a { grid-column: 1; grid-row: 1; justify-self: start; }
+  .half--b { grid-column: 3; grid-row: 1; justify-self: end; }
+  .reel { grid-column: 2; grid-row: 2; align-self: center; position: relative; z-index: 2; margin-inline: 0; overflow: visible; --sliver: 40px; --gap: 16px; --fw: calc(var(--reel) - 2 * (var(--sliver) + var(--gap))); }
+  .reel__window { overflow: clip; }
+  .reel__track { padding-inline: calc(var(--sliver) + var(--gap)); }
+  .reel__foot { position: absolute; top: 100%; left: 0; right: 0; padding-inline: calc(var(--sliver) + var(--gap)); }
+  .hero__act { grid-column: 1; grid-row: 3; align-self: end; }
+  .hero__sentence { font-size: 24px; }
+}
+@media (min-width: 75em) and (prefers-reduced-motion: no-preference) {
+  .js .hero { height: 240svh; }
+  .js .hero__stage { position: sticky; top: 0; }
+  .js .reel__controls .ctl { display: none; }
+  .js .reel__count { margin-left: 0; }
+}
+.reel__track { transition: transform 620ms var(--ease-out); }
+.js .hero.is-held .reel__track { transition: none; }
+
+/* ---------- interface fragments: macOS conventions ---------- */
+[data-ui] { font-family: var(--font); color: #1d1d1f; line-height: 1.35; text-align: left; }
+[data-ui] code { font-size: 0.94em; }
+[data-ui].win { position: absolute; inset: 0; display: flex; flex-direction: column; background: #ffffff; border-radius: 10px; border: 1px solid rgba(0, 0, 0, 0.14); overflow: hidden; font-size: clamp(11px, 2.85cqw, 14px); }
+[data-ui] .win__bar { display: flex; align-items: center; gap: 0.6em; padding: 0.55em 0.8em; background: #f6f6f6; border-bottom: 1px solid rgba(0, 0, 0, 0.1); white-space: nowrap; }
+[data-ui] .lights { display: inline-flex; gap: 0.45em; margin-right: 0.4em; }
+[data-ui] .lights i { width: 0.9em; height: 0.9em; border-radius: 50%; background: #ff5f57; }
+[data-ui] .lights i:nth-child(2) { background: #febc2e; }
+[data-ui] .lights i:nth-child(3) { background: #28c840; }
+[data-ui] .win__title { font-weight: 700; margin-right: auto; }
+[data-ui] .mac-btn { padding: 0.18em 0.7em; border-radius: 6px; background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.18); font-size: 1em; color: #1d1d1f; transition: background-color 120ms ease, transform var(--t-press) var(--ease-out); }
+[data-ui] .mac-btn:active:not(:disabled) { background: #e3e3e3; transform: scale(0.97); }
+[data-ui] .mac-btn:disabled { color: #6a6a6f; cursor: default; }
+[data-ui] .mac-btn.is-primary { background: #0063e1; border-color: #0063e1; color: #ffffff; }
+[data-ui] .rows { position: relative; padding: 0.3em 0; }
+[data-ui] .row { position: relative; display: grid; grid-template-columns: 1.8em 2.1em minmax(0, 1fr) auto 3.6em; align-items: center; column-gap: 0.4em; height: 2.15em; padding-right: 0.8em; transition: color var(--t-ui) ease; }
+[data-ui] .row.is-sel { background: #e4e4e7; }
+[data-ui] .row .num { color: #6a6a6f; font-variant-numeric: tabular-nums; }
+[data-ui] .row .prompt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-ui] .row .counts { font-variant-numeric: tabular-nums; white-space: nowrap; }
+[data-ui] .row .age { text-align: right; color: #6a6a6f; font-variant-numeric: tabular-nums; }
+[data-ui] .row.is-undone .prompt, [data-ui] .row.is-undone .counts { color: #6a6a6f; }
+[data-ui] .rail { position: relative; align-self: stretch; }
+[data-ui] .rail::before { content: ""; position: absolute; left: 0.95em; top: 0; bottom: 0; border-left: 1px solid #d0d0d4; }
+[data-ui] .row:first-child .rail::before, [data-ui] .row.is-hidden:first-child + .row .rail::before { top: 50%; }
+[data-ui] .row:has(+ .caret) .rail::before { bottom: 50%; }
+[data-ui] .rail::after { content: ""; position: absolute; left: 0.68em; top: 50%; width: 0.6em; height: 0.6em; margin-top: -0.3em; border-radius: 50%; background: #9a9aa0; }
+[data-ui] .caret { position: absolute; left: 0.25em; top: 0.3em; width: 0.22em; height: 2.15em; padding-block: 0.45em; background-clip: content-box; background-color: #0063e1; border-radius: 2px; transform: translateY(calc(var(--caret, 0) * 2.15em)); transition: transform 420ms var(--ease-out); }
+[data-ui] .add { color: #23863b; }
+[data-ui] .del { color: #d70015; }
+[data-ui] .mod { color: #b25000; }
+[data-ui] .detail { flex: 1; display: flex; flex-direction: column; gap: 0.45em; padding: 0.55em 0.9em 0.8em; border-top: 1px solid rgba(0, 0, 0, 0.08); min-height: 0; }
+[data-ui] .banner { display: flex; align-items: baseline; justify-content: space-between; gap: 1em; min-height: 1.9em; padding: 0.3em 0.6em; border-radius: 6px; background: #f2f2f4; font-weight: 600; font-variant-numeric: tabular-nums; }
+[data-ui] .banner:empty { background: transparent; }
+[data-ui] .meta { color: #6e6e73; }
+[data-ui] .files-h { font-weight: 700; }
+[data-ui] .files { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.25em 1em; }
+[data-ui] .files li { display: flex; gap: 0.5em; white-space: nowrap; overflow: hidden; }
+[data-ui] .files b { width: 0.9em; font-weight: 600; }
+[data-ui] .files code { overflow: hidden; text-overflow: ellipsis; }
+[data-ui] .files b.D { color: #d70015; }
+[data-ui] .files b.A { color: #23863b; }
+[data-ui] .files b.M { color: #b25000; }
+
+[data-ui].term { position: absolute; inset: 0; margin: 0; padding: 0.9em 1.1em; background: #1e1e1e; color: #e8e8e8; border-radius: 10px; font-size: clamp(11px, 3.1cqw, 15px); line-height: 1.55; overflow: hidden; white-space: pre; }
+[data-ui].term .p { color: #8fd18a; }
+[data-ui].term .dim { color: #9a9a9a; }
+
+/* ---------- proof ---------- */
+.proof__h { grid-column: 1 / -1; font-size: var(--step-head); line-height: 1.04; letter-spacing: -0.025em; }
+.proof__h span { display: block; }
+.proof__table { grid-column: 1 / -1; margin-top: 72px; }
+.proof table { width: 100%; border-collapse: collapse; font-size: 18px; line-height: 1.4; }
+.proof th, .proof td { padding: 14px 16px; text-align: left; vertical-align: top; font-weight: 400; }
+.proof thead th { font-size: 16px; font-weight: 600; padding-bottom: 18px; }
+.proof thead th code { white-space: nowrap; }
+.proof tbody tr:nth-child(odd) { background: var(--surface); }
+.proof tbody th { font-weight: 600; }
+.proof .is-us th, .proof .is-us td { font-weight: 700; }
+.proof td:last-child, .proof th:last-child { text-align: right; }
+.proof__note { grid-column: 1 / -1; margin-top: 32px; font-size: 18px; }
+@media (min-width: 48em) {
+  .proof__h { grid-column: 1 / 9; }
+  .proof__h .l2 { padding-left: calc((100% + var(--gutter)) * 2 / 8); }
+  .proof col.c-tool { width: 17%; }
+  .proof col.c-mid { width: 33%; }
+  .proof col.c-end { width: 17%; }
+  .proof__note { grid-column: 3 / 11; }
+  /* The zebra bands reach into the page margin by the cell padding, so the cell text sits on the margins. */
+  .proof table { --bleed: clamp(0px, var(--margin) - 16px, 16px); width: calc(100% + 2 * var(--bleed)); margin-inline: calc(var(--bleed) * -1); }
+}
+@media (max-width: 47.99em) {
+  .proof thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .proof table, .proof tbody, .proof tr, .proof th, .proof td { display: block; }
+  .proof tbody tr { padding: 14px 16px; }
+  .proof th, .proof td { padding: 2px 0; text-align: left; }
+  .proof td:last-child { text-align: left; }
+  .proof tbody th { font-size: 18px; font-weight: 600; padding-bottom: 6px; }
+  .proof td::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 400; }
+}
+
+/* ---------- how it works ---------- */
+.how__grid { align-items: start; }
+.how__text { grid-column: 1 / -1; }
+.steps { margin-top: 24px; }
+.step { padding-block: 8px 48px; color: var(--muted); transition: color 320ms ease; }
+.step.is-active { color: var(--ink); }
+.step__s { font-size: clamp(1.75rem, 1rem + 1.4vw, 2.25rem); line-height: 1.12; letter-spacing: -0.025em; font-weight: 500; text-wrap: balance; }
+.step__s[role="button"] { cursor: pointer; }
+.step__t { margin-top: 18px; max-width: 40ch; }
+.how__stage { grid-column: 1 / -1; grid-row: 2; height: 46svh; padding: 12px 0; }
+.how__pad { position: relative; height: 100%; container-type: inline-size; background: var(--surface); border-radius: var(--radius); padding: clamp(14px, 3cqw, 36px); }
+.how__win { position: relative; height: 100%; }
+.how__note { display: none; }
+@media (max-width: 63.99em) {
+  /* Heading, stage, statements, then the detail of the selected statement: the stage stays on screen while the reader picks. */
+  .how__text { display: contents; }
+  .how__h, .steps { grid-column: 1 / -1; }
+  .how__h { grid-row: 1; margin-bottom: 12px; }
+  .steps { grid-row: 3; }
+  .js .step { padding-block: 10px; }
+  .js .step > .step__t { display: none; }
+  /* The three details share one cell, so the slot keeps the height of the longest and nothing moves when the step changes. */
+  .js .how__note { grid-column: 1 / -1; grid-row: 4; display: grid; margin-top: 14px; }
+  .how__note > .step__t { grid-area: 1 / 1; margin-top: 0; }
+  .how__note > :not(.is-on) { visibility: hidden; }
+}
+@media (min-width: 64em) {
+  .how__text { grid-column: 1 / 6; grid-row: 1; }
+  .step { min-height: 80svh; display: flex; flex-direction: column; justify-content: center; padding-block: 0; }
+  .step:first-child { min-height: 70svh; justify-content: flex-start; padding-top: 18svh; }
+  .how__stage { grid-column: 7 / -1; grid-row: 1; position: sticky; z-index: 2; top: 14vh; height: min(560px, 72svh); padding: 0; }
+  .steps { margin-top: 0; }
+  .how__h { position: absolute; }
+}
+[data-ui] .running { display: grid; grid-template-columns: 1.8em minmax(0, 1fr) auto; column-gap: 0.4em; align-items: start; padding: 0.4em 0.8em 0.4em 0; background: #eef4fe; }
+[data-ui] .running .spin { margin: 0.35em 0 0 0.55em; width: 0.75em; height: 0.75em; border-radius: 50%; border: 2px solid #0063e1; border-right-color: transparent; }
+[data-ui] .running .r-prompt { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-ui] .running .r-step { display: block; height: 1.4em; overflow: hidden; color: #4a4a4f; }
+[data-ui] .running .r-step code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: transform 380ms var(--ease-out), opacity 380ms ease; }
+[data-ui] .running .r-step code.is-leaving { transform: translateY(-100%); opacity: 0; }
+[data-ui] .running .r-state { text-align: right; color: #0063e1; font-weight: 600; font-variant-numeric: tabular-nums; }
+[data-ui] .running .r-state span { display: block; color: #6e6e73; font-weight: 400; }
+[data-ui] .grid2 { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.3em 1em; }
+[data-ui] .grid2 dt { color: #6e6e73; }
+[data-ui] .grid2 dd code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-ui] .note { color: #6e6e73; max-width: none; }
+[data-ui] .is-hidden { display: none; }
+[data-ui].how__ui .rows .row { height: 2.15em; }
+@media (max-width: 63.99em) { [data-ui].how__ui .detail { display: none; } }
+
+/* ---------- showcase ---------- */
+.showcase { background: var(--field); color: var(--field-ink); padding: 64px var(--margin); }
+.showcase__inner { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); row-gap: 40px; }
+.showcase__side { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 20px; }
+.showcase__side h2 { font-size: var(--step-head); line-height: 1.04; letter-spacing: -0.025em; }
+.showcase__name { font-size: 24px; font-weight: 300; line-height: 1.25; }
+.showcase__text { font-size: 16px; color: var(--field-ink); max-width: 34ch; margin-top: 8px; }
+.showcase__controls { display: flex; align-items: center; gap: 8px; }
+.showcase .ctl { background: #262626; color: var(--field-ink); }
+.showcase__count { margin-left: 8px; font-size: var(--step-small); color: var(--field-muted); font-variant-numeric: tabular-nums; }
+.showcase__row { grid-column: 1 / -1; overflow: hidden; margin-inline: calc(var(--margin) * -1); }
+.showcase__track { display: flex; flex-wrap: wrap; gap: 24px; padding-inline: var(--margin); }
+.panel { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; max-width: 100%; transition: opacity 420ms ease; }
+.panel figcaption { margin-top: 14px; font-size: 16px; max-width: 46ch; }
+.panel figcaption strong { display: block; font-size: 18px; font-weight: 600; }
+.crop { display: block; width: calc(var(--w) * 1px); max-width: 100%; aspect-ratio: var(--w) / var(--h); overflow: hidden; border-radius: var(--radius); background: #1e1e1e; }
+.crop img { width: calc(1200 / var(--w) * 100%); max-width: none; margin-left: calc(var(--x, 0) / var(--w) * -100%); margin-top: calc(var(--y, 0) / var(--w) * -100%); }
+.js .showcase__track { flex-wrap: nowrap; align-items: center; transition: transform 620ms var(--ease-out); }
+.js .showcase__row { touch-action: pan-y pinch-zoom; }
+.js .panel { opacity: 0.45; }
+.js .panel.is-lit { opacity: 1; }
+.js .panel figcaption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.no-js-hide { display: none; }
+.js .no-js-hide { display: flex; }
+@media (min-width: 64em) {
+  .showcase { min-height: 96svh; display: flex; align-items: center; padding-block: 80px; }
+  .showcase__inner { width: 100%; align-items: center; }
+  .showcase__side { grid-column: 1 / 4; }
+  .showcase__row { grid-column: 4 / -1; margin-inline: 0 calc(var(--margin) * -1); }
+  .showcase__track { padding-inline: 0; }
+  .js .showcase__track { min-height: 340px; }
+}
+[data-ui].notif { width: 380px; max-width: calc(100vw - 2 * var(--margin)); padding: 12px 14px; border-radius: 16px; background: #2c2c2e; color: #f2f2f7; font-size: 13px; display: grid; grid-template-columns: 34px minmax(0, 1fr); column-gap: 10px; border: 1px solid rgba(255, 255, 255, 0.1); }
+[data-ui].notif img { width: 34px; height: 34px; }
+[data-ui].notif .n-app { display: flex; justify-content: space-between; color: #aeaeb2; font-size: 12px; }
+[data-ui].notif .n-title { font-weight: 600; margin-top: 2px; }
+[data-ui].notif .n-body { color: #d1d1d6; margin-top: 2px; max-width: none; }
+[data-ui].notif .n-act { grid-column: 2; justify-self: start; margin-top: 10px; padding: 4px 12px; border-radius: 6px; background: #48484a; color: #ffffff; font-size: 13px; }
+[data-ui].term-panel { width: 460px; max-width: calc(100vw - 2 * var(--margin)); margin: 0; padding: 16px 18px; background: #1e1e1e; color: #e8e8e8; border-radius: 8px; font-size: 13px; line-height: 1.6; white-space: pre; overflow: hidden; }
+[data-ui].term-panel .p { color: #8fd18a; }
+[data-ui].term-panel .warn { color: #ffd479; }
+
+/* ---------- menu bar ---------- */
+.menu-sec__grid { row-gap: 40px; }
+.menu-sec__h { grid-column: 1 / -1; }
+.menu-sec__panel { grid-column: 1 / -1; justify-self: center; width: 100%; max-width: 380px; }
+.notes { grid-column: 1 / -1; display: grid; gap: 16px; }
+.note-btn { display: block; width: 100%; text-align: left; padding: 10px 0; border-radius: var(--radius); }
+.note-btn strong { display: block; font-size: 18px; font-weight: 500; }
+.note-btn span { display: block; font-size: 16px; color: var(--muted); margin-top: 2px; max-width: 34ch; }
+.note-btn kbd { font-family: var(--font); font-size: 1em; }
+@media (min-width: 64em) {
+  .menu-sec__panel { grid-column: 5 / 9; grid-row: 2; justify-self: center; }
+  .notes { grid-row: 2; }
+  .notes--l { grid-column: 1 / 5; }
+  .notes--r { grid-column: 9 / -1; }
+  .notes--l .note-btn { text-align: right; }
+  .notes--l .note-btn span { margin-left: auto; }
+  .js .notes { display: block; position: relative; }
+  .js .notes .note-btn { position: absolute; top: var(--y); max-width: 300px; }
+  .js .notes--l .note-btn { right: 0; }
+  .js .notes--r .note-btn { left: 0; }
+}
+[data-ui].menu { position: relative; padding: 5px; border-radius: 10px; background: #f0f0f0; border: 1px solid rgba(0, 0, 0, 0.16); font-size: 13px; color: #1d1d1f; }
+[data-ui].menu .m-head { padding: 6px 10px 2px; font-size: 11px; font-weight: 700; color: #6a6a6f; }
+[data-ui].menu .m-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; padding: 3px 10px; border-radius: 5px; transition: opacity var(--t-ui) ease; }
+[data-ui].menu .m-item .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-ui].menu .m-item .s { grid-column: 1; font-size: 11px; color: #6a6a6f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+[data-ui].menu .m-item .k { grid-row: 1; grid-column: 2; color: #6a6a6f; }
+[data-ui].menu .m-item.is-off .t { color: #6a6a6f; }
+[data-ui].menu .m-item.is-undone .t { color: #6a6a6f; }
+[data-ui].menu .m-sep { margin: 5px 10px; border-top: 1px solid rgba(0, 0, 0, 0.1); }
+[data-ui].menu .m-num { font-variant-numeric: tabular-nums; }
+[data-ui].menu .m-part { transition: opacity var(--t-ui) ease; }
+[data-ui].menu.is-focusing .m-part { opacity: 0.4; }
+[data-ui].menu.is-focusing .m-part.is-target { opacity: 1; }
+
+/* ---------- commands ---------- */
+.cmds__head { align-items: end; row-gap: 20px; }
+.cmds__head h2 { grid-column: 1 / -1; }
+.cmds__head h2 span { display: block; }
+.cmds__head .link { grid-column: 1 / -1; font-size: 18px; text-decoration-line: underline; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 56px; }
+.tab { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; width: 150px; height: 64px; padding: 0 16px; border-radius: var(--radius); background: var(--surface); text-align: left; transition: background-color var(--t-hover) ease, color var(--t-hover) ease, transform var(--t-press) var(--ease-out); }
+.tab:active { transform: scale(0.97); }
+.tab__label { font-size: 16px; font-weight: 500; }
+.tab__count { font-size: 14px; color: var(--muted); }
+.tab[aria-selected="true"] { background: var(--ink); color: #ffffff; }
+.tab[aria-selected="true"] .tab__count { color: #c4c4c4; }
+@media (hover: hover) and (pointer: fine) { .tab[aria-selected="false"]:hover { background: #e6e6e6; } }
+.bands { margin-top: 24px; }
+.band { display: grid; grid-template-columns: 1fr; row-gap: 4px; padding: 16px; }
+.band:nth-child(odd) { background: var(--surface); }
+.band code { font-size: 16px; }
+.band p { font-size: 18px; }
+.band .band__app { color: var(--muted); font-size: 16px; }
+.bands h3 { font-size: 18px; margin: 24px 0 8px; }
+.js .bands h3 { display: none; }
+@media (min-width: 64em) {
+  .cmds__head h2 { grid-column: 1 / 9; }
+  .cmds__head .link { grid-column: 10 / -1; justify-self: end; margin-bottom: 0.4em; }
+  .band { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: center; min-height: 76px; padding: 0 16px; }
+  .band code { grid-column: 1 / 5; }
+  .band p { grid-column: 5 / 10; }
+  .band .band__app { grid-column: 10 / -1; text-align: right; }
+}
+
+/* ---------- stats ---------- */
+.stats__h { grid-column: 1 / -1; }
+.stats__h span { display: block; }
+.figs { grid-column: 1 / -1; margin-top: 48px; }
+.fig { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); column-gap: var(--gutter); align-items: baseline; padding-block: 10px; }
+.fig__n { font-size: var(--step-display); line-height: 1; letter-spacing: -0.04em; font-weight: 400; text-align: right; font-variant-numeric: tabular-nums; }
+.fig__u { font-size: var(--step-head); letter-spacing: -0.02em; margin-left: 0.08em; }
+.fig__c { font-size: 18px; max-width: 40ch; }
+@media (min-width: 64em) {
+  .stats__h { grid-column: 1 / 6; }
+  .figs { grid-column: 6 / -1; margin-top: 0; }
+}
+
+/* ---------- call to action ---------- */
+.cta__grid { row-gap: var(--gutter); }
+.cta__tile { grid-column: 1 / -1; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 40px clamp(20px, 4vw, 56px); min-height: 360px; background: var(--accent); color: var(--accent-ink); border-radius: var(--radius); }
+.cta__tile h2 { font-size: min(var(--step-head), 2.25rem); line-height: 1.08; letter-spacing: -0.02em; }
+.cta__tile p { font-size: 18px; max-width: 52ch; }
+.cta__field { display: flex; align-items: center; gap: 12px; width: min(100%, 640px); min-height: 52px; padding: 4px 4px 4px 16px; background: #ffffff; color: var(--ink); border-radius: var(--radius); }
+.cta__field code { flex: 1; min-width: 0; padding-block: 6px; overflow-wrap: anywhere; line-height: 1.4; font-size: 16px; }
+.cta__copy { min-height: 44px; padding: 0 16px; border-radius: var(--radius); background: var(--ink); color: #ffffff; font-size: 16px; font-weight: 500; transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease; }
+.cta__copy:active { transform: scale(0.96); }
+.cta__links { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; font-size: 18px; }
+.cta__links a { text-decoration-line: underline; }
+.cta__links a:focus-visible { outline-color: var(--accent-ink); }
+.cta__side { display: none; position: relative; border-radius: var(--radius); min-height: 360px; overflow: hidden; }
+.cta__side img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: none; object-position: -490px -60px; }
+@media (hover: hover) and (pointer: fine) { .cta__copy:hover { background: #333333; } }
+@media (min-width: 64em) {
+  .cta__tile { grid-column: 1 / 9; }
+  .cta__side { display: block; grid-column: 9 / -1; }
+}
+
+/* ---------- faq ---------- */
+.faq__list { display: grid; grid-template-columns: minmax(0, 1fr); }
+.faq__h { margin-bottom: 24px; }
+.faq__item h3 { font-size: 18px; font-weight: 400; }
+.faq__q { display: flex; align-items: baseline; gap: 14px; width: 100%; padding: 12px 0; text-align: left; transition: color var(--t-hover) ease; }
+.faq__q::before { content: ""; flex: 0 0 8px; height: 8px; border-radius: 50%; background: currentColor; transform: translateY(-0.12em) scale(0.6); opacity: 0.3; transition: transform var(--t-ui) var(--ease-out), opacity var(--t-ui) ease; }
+.faq__q[aria-expanded="true"]::before { transform: translateY(-0.12em); opacity: 1; }
+.faq__a { padding: 4px 0 20px 22px; font-size: 18px; }
+.faq__a p { max-width: 52ch; }
+@media (hover: hover) and (pointer: fine) { .faq__q:hover::before { opacity: 1; } }
+@media (min-width: 64em) {
+  .js .faq__list { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: start; }
+  .js .faq__item { display: contents; }
+  .js .faq__h, .js .faq__item h3 { grid-column: 1 / 7; }
+  .js .faq__a { grid-column: 7 / -1; grid-row: 1 / span 9; position: sticky; top: 24vh; padding: 0; font-size: 24px; line-height: 1.35; letter-spacing: -0.01em; }
+  .js .faq__a p { max-width: 44ch; }
+  .js .faq__q[aria-expanded="false"]:not(:hover) { color: var(--muted); }
+}
+
+/* ---------- footer ---------- */
+.footer { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 32px; padding: 32px var(--margin) 40px; font-size: 16px; }
+.footer__links { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-inline: auto; }
+.footer__links a { text-decoration-line: underline; }
+.footer p { color: var(--muted); }
+
+/* ---------- motion (content stays visible without JavaScript or with reduced motion) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .js .hero [data-line] { transform: translateY(105%); animation: load-line 800ms var(--ease-expo) forwards; animation-delay: calc(100ms + var(--i) * 90ms); }
+  .js .hero [data-load] { opacity: 0; transform: translateY(12px); animation: load-rise 500ms var(--ease-out) forwards; animation-delay: var(--d); }
+  .js .hero [data-open] { animation: load-open 1000ms var(--ease-in-out) 150ms backwards; }
+  .js [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity 700ms var(--ease-out), transform 900ms var(--ease-out); transition-delay: calc(var(--i, 0) * 70ms); }
+  .js [data-reveal="row"] { transform: translateY(14px); transition-duration: 500ms, 600ms; }
+  .js [data-reveal="open"] { opacity: 1; transform: none; }
+  .js [data-reveal="open"] > * { clip-path: inset(0 0 100% 0); transition: clip-path 1100ms var(--ease-in-out); transition-delay: calc(var(--i, 0) * 70ms); }
+  .js [data-reveal="open"].is-in > * { clip-path: inset(0); }
+  .js [data-reveal="fig"] { transform: translateY(40%); }
+  .js [data-reveal].is-in { opacity: 1; transform: none; }
+  .js [data-ui] .running .spin { animation: spin 900ms linear infinite; }
+  .js .is-paused [data-ui] .running .spin { animation-play-state: paused; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reel__track, .showcase__track, [data-ui] .caret { transition: none; }
+}
+@keyframes load-line { to { transform: none; } }
+@keyframes load-rise { to { opacity: 1; transform: none; } }
+@keyframes load-open { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 -6rem 0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header class="hero scene" id="top">
+  <div class="hero__stage">
+    <nav class="nav" aria-label="Main" data-load style="--d:520ms">
+      <a class="wordmark" href="#top"><img src="images/icon.svg" width="30" height="30" alt=""> UndoTurn</a>
+      <ul class="nav__links">
+        <li><a class="link" href="#how">How it works</a></li>
+        <li><a class="link" href="#commands">Commands</a></li>
+        <li><a class="link" href="#faq">FAQ</a></li>
+        <li><a class="link" href="guide.html">User guide</a></li>
+      </ul>
+      <a class="button button--small" href="#install">Build from source</a>
+    </nav>
+
+    <h1 class="hero__title lines">
+      <span class="line half half--a"><span data-line style="--i:0">Agent changes.</span></span>
+      <span class="line half half--b"><span data-line style="--i:1">A local history.</span></span>
+    </h1>
+
+    <div class="reel" data-open role="region" aria-roledescription="carousel" aria-label="UndoTurn at work" tabindex="-1">
+      <div class="reel__window">
+      <div class="reel__track">
+        <figure class="frame is-current" aria-roledescription="slide" aria-label="1 of 4" data-caption="A turn deleted five files. Press Undo #2.">
+          <div class="frame__box">
+            <div class="frame__in frame__in--tall">
+            <div class="win ledger" data-ui id="ledger" data-head="2">
+              <div class="win__bar">
+                <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="win__title">api-server</span>
+                <button type="button" class="mac-btn" data-act="undo">Undo #2</button>
+                <button type="button" class="mac-btn" data-act="redo" disabled>Redo</button>
+              </div>
+              <ol class="rows" aria-label="Turns">
+                <li class="row is-sel" data-turn="2"><span class="rail" aria-hidden="true"></span><span class="num">#2</span><span class="prompt">Clean up the project and remove unused files</span><span class="counts del">&minus;5</span><span class="age">now</span></li>
+                <li class="row" data-turn="1"><span class="rail" aria-hidden="true"></span><span class="num">#1</span><span class="prompt">Add a health check endpoint</span><span class="counts"><span class="add">+1</span> <span class="mod">~1</span></span><span class="age">2 min</span></li>
+                <li class="caret" aria-hidden="true"></li>
+              </ol>
+              <div class="detail">
+                <p class="banner" role="status" aria-live="polite"></p>
+                <p class="meta">#2 &middot; <span data-state>Current</span> &middot; Claude Code &middot; just now</p>
+                <p class="files-h">Files &middot; 5</p>
+                <ul class="files">
+                  <li><b class="D">D</b><code>src/health.ts</code></li>
+                  <li><b class="D">D</b><code>src/items.ts</code></li>
+                  <li><b class="D">D</b><code>src/routes.ts</code></li>
+                  <li><b class="D">D</b><code>src/server.ts</code></li>
+                  <li><b class="D">D</b><code>tests/items.test.ts</code></li>
+                </ul>
+              </div>
+            </div>
+            </div>
+          </div>
+          <figcaption>A turn deleted five files. Press Undo #2.</figcaption>
+        </figure>
+
+        <figure class="frame" aria-roledescription="slide" aria-label="2 of 4" data-caption="The real app after undoturn undo: #2 is undone, Redo is ready.">
+          <div class="frame__box">
+            <div class="frame__in shot" style="--iw:1280;--w:1000">
+            <img src="images/undo-after.jpg" width="1280" height="720" alt="The UndoTurn timeline after an undo: turn 2, which deleted five files, is undone, turn 1 is current, and the Redo button in the toolbar is available" loading="lazy">
+            </div>
+          </div>
+          <figcaption>The real app after undoturn undo: #2 is undone, Redo is ready.</figcaption>
+        </figure>
+
+        <figure class="frame" aria-roledescription="slide" aria-label="3 of 4" data-caption="Or from the terminal: one command, one line per file.">
+          <div class="frame__box">
+            <div class="frame__in">
+<pre class="term" data-ui role="group" aria-label="Terminal"><code><span class="p">~/api-server $</span> undoturn undo
+restored: src/health.ts
+restored: src/items.ts
+restored: src/routes.ts
+restored: src/server.ts
+restored: tests/items.test.ts
+<span class="p">~/api-server $</span> </code></pre>
+            </div>
+          </div>
+          <figcaption>Or from the terminal: one command, one line per file.</figcaption>
+        </figure>
+
+        <figure class="frame" aria-roledescription="slide" aria-label="4 of 4" data-caption="Every project, every turn, in one window.">
+          <div class="frame__box">
+            <div class="frame__in shot" style="--iw:1200;--w:1200">
+              <img src="images/timeline-dark.png" srcset="images/timeline-dark.png 2x" width="1200" height="760" alt="The UndoTurn timeline in dark mode: the Projects sidebar, five turns of a web app, newest first, and the current turn with its line diff" loading="lazy">
+            </div>
+          </div>
+          <figcaption>Every project, every turn, in one window.</figcaption>
+        </figure>
+      </div>
+      </div>
+      <div class="reel__foot">
+        <p class="reel__caption" aria-hidden="true">A turn deleted five files. Press Undo #2.</p>
+        <div class="reel__controls">
+          <button type="button" class="ctl" data-reel="-1" aria-label="Previous picture">Previous</button>
+          <button type="button" class="ctl" data-reel="1" aria-label="Next picture">Next</button>
+          <span class="reel__count" aria-hidden="true">1 / 4</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero__act" data-load style="--d:440ms">
+      <p class="hero__sentence lead">Undo for coding agents on macOS. UndoTurn records filesystem changes across prompts. Concurrent sessions share an interval; recovery keeps conflicting edits.</p>
+      <a class="button" href="#install">Build from source</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="section proof" id="proof" aria-labelledby="proof-h">
+  <div class="wrap grid">
+    <h2 class="proof__h" id="proof-h"><span class="l1" data-reveal>Your safety nets</span><span class="l2" data-reveal style="--i:1">have holes.</span></h2>
+    <div class="proof__table">
+      <table>
+        <caption class="sr-only">How UndoTurn compares with Git, Claude Code checkpoints and Time Machine</caption>
+        <colgroup><col class="c-tool"><col class="c-mid"><col class="c-mid"><col class="c-end"></colgroup>
+        <thead>
+          <tr data-reveal="row" style="--i:2"><th scope="col"><span class="sr-only">Tool</span></th><th scope="col">History at agent boundaries, without manual commits</th><th scope="col">Undoes changes made by shell commands (<code>rm</code>, <code>mv</code>, <code>sed -i</code>)</th><th scope="col">One history for all ten supported agent CLIs</th></tr>
+        </thead>
+        <tbody>
+          <tr data-reveal="row" style="--i:3"><th scope="row">Git</th><td data-label="Agent-boundary history">No, you make the commits</td><td data-label="Shell commands">Only for committed files</td><td data-label="All ten agents">Yes</td></tr>
+          <tr data-reveal="row" style="--i:4"><th scope="row">Claude Code checkpoints</th><td data-label="Agent-boundary history">Yes</td><td data-label="Shell commands">Only for files that Claude also edited with its own tools</td><td data-label="All ten agents">Claude Code only</td></tr>
+          <tr data-reveal="row" style="--i:5"><th scope="row">Time Machine</th><td data-label="Agent-boundary history">No, it runs on a schedule</td><td data-label="Shell commands">Only up to the last backup</td><td data-label="All ten agents">Yes</td></tr>
+          <tr class="is-us" data-reveal="row" style="--i:6"><th scope="row">UndoTurn</th><td data-label="Agent-boundary history">Yes; overlapping sessions share an interval</td><td data-label="Shell commands">Yes</td><td data-label="All ten agents">Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="proof__note" data-reveal style="--i:7">Codex CLI removed its experimental <code>/undo</code> in January 2026 (<a class="link-plain" href="https://github.com/openai/codex/issues/8804">openai/codex#8804</a>). The request to bring it back (<a class="link-plain" href="https://github.com/openai/codex/issues/9203">openai/codex#9203</a>) is still open. UndoTurn gives undo back to Codex, and to all the other agents.</p>
+  </div>
+</section>
+
+<section class="section how" id="how" aria-labelledby="how-h">
+  <div class="wrap grid how__grid">
+    <div class="how__text">
+      <h2 class="how__h head" id="how-h" data-reveal>How it works</h2>
+      <ol class="steps">
+        <li class="step is-active" data-step="1">
+          <p class="step__s" data-reveal style="--i:1">You send a prompt. UndoTurn records the files.</p>
+          <p class="step__t" data-reveal style="--i:2">The hook stores what changed since the last turn. It follows <code>.gitignore</code>, but it still records <code>.env</code> files unless <code>.undoturnignore</code> excludes them.</p>
+        </li>
+        <li class="step" data-step="2">
+          <p class="step__s">The agent runs rm, mv and sed&nbsp;-i.</p>
+          <p class="step__t">UndoTurn compares the files themselves, not the tool log of the agent. A change from a shell command is undone like any edit.</p>
+        </li>
+        <li class="step" data-step="3">
+          <p class="step__s">You undo. The files come back.</p>
+          <p class="step__t">A durable journal resumes interrupted recovery and records completed operations. Filesystem changes and journal progress are not atomic against other writers.</p>
+        </li>
+      </ol>
+    </div>
+    <div class="how__stage" data-reveal="open" style="--i:2">
+      <div class="how__pad">
+        <div class="how__win">
+          <div class="win how__ui" data-ui id="story" data-step="1" role="group" aria-label="The UndoTurn timeline during a turn">
+            <div class="win__bar">
+              <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="win__title">web-app</span>
+              <span class="mac-btn" data-s-undo>Undo #5</span>
+              <span class="mac-btn" data-s-redo aria-disabled="true" style="color:#6a6a6f">Redo</span>
+            </div>
+            <div class="running" data-s-running>
+              <span class="spin" aria-hidden="true"></span>
+              <span><span class="r-prompt">Move the API client into src/api</span><span class="r-step"><code data-s-step></code></span></span>
+              <span class="r-state">Running<span data-s-timer>0:01</span></span>
+            </div>
+            <ol class="rows">
+              <li class="row is-undone is-hidden" data-s-six><span class="rail" aria-hidden="true"></span><span class="num">#6</span><span class="prompt">Move the API client into src/api</span><span class="counts"><span class="add">+2</span> <span class="mod">~2</span> <span class="del">&minus;1</span></span><span class="age">now</span></li>
+              <li class="row"><span class="rail" aria-hidden="true"></span><span class="num">#5</span><span class="prompt">Keep the App name but export Shell as an alias</span><span class="counts mod">~1</span><span class="age">2 h</span></li>
+              <li class="row is-undone"><span class="rail" aria-hidden="true"></span><span class="num">#4</span><span class="prompt">Rename App to Shell and update imports</span><span class="counts mod">~1</span><span class="age">2 h</span></li>
+              <li class="row"><span class="rail" aria-hidden="true"></span><span class="num">#3</span><span class="prompt">Remove the unused README section and clean up old files</span><span class="counts del">&minus;1</span><span class="age">2 h</span></li>
+              <li class="row"><span class="rail" aria-hidden="true"></span><span class="num">#2</span><span class="prompt">Retry failed requests up to three times with backoff</span><span class="counts mod">~1</span><span class="age">2 h</span></li>
+              <li class="row"><span class="rail" aria-hidden="true"></span><span class="num">#1</span><span class="prompt">Add a loading state to the item list and show a spinner</span><span class="counts"><span class="add">+1</span> <span class="mod">~1</span></span><span class="age">2 h</span></li>
+              <li class="caret" aria-hidden="true" style="--caret:0" data-s-caret></li>
+            </ol>
+            <div class="detail">
+              <p class="banner" data-s-banner></p>
+              <div data-s-running-detail>
+                <p class="files-h">Move the API client into src/api</p>
+                <p class="meta">Claude Code &middot; started just now</p>
+                <dl class="grid2" data-s-latest style="margin-top:0.5em"><dt>Latest step</dt><dd><code data-s-latest-code>$ mv src/client.ts src/api/client.ts</code></dd></dl>
+                <p class="note" style="margin-top:0.5em">UndoTurn records this turn when the agent stops. Its files show here then.</p>
+              </div>
+              <div data-s-undone-detail class="is-hidden">
+                <p class="files-h">Move the API client into src/api</p>
+                <p class="meta">#6 &middot; Undone &middot; Claude Code &middot; just now</p>
+                <ul class="files" style="margin-top:0.5em">
+                  <li><b class="A">A</b><code>src/api/client.ts</code></li>
+                  <li><b class="A">A</b><code>src/api/index.ts</code></li>
+                  <li><b class="D">D</b><code>src/client.ts</code></li>
+                  <li><b class="M">M</b><code>src/App.tsx</code></li>
+                  <li><b class="M">M</b><code>src/List.tsx</code></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase" id="app" aria-labelledby="app-h">
+  <div class="showcase__inner">
+    <div class="showcase__side">
+      <h2 id="app-h" data-reveal>Inside the app</h2>
+      <div class="showcase__now" aria-live="polite" data-reveal style="--i:1">
+        <p class="showcase__name" data-sc-name>Every turn, in order</p>
+        <p class="showcase__text" data-sc-text>Recorded intervals form a tree. The blue mark shows the current history position.</p>
+      </div>
+      <div class="showcase__controls no-js-hide" data-reveal style="--i:2">
+        <button type="button" class="ctl" data-sc="-1" aria-label="Previous panel">Previous</button>
+        <button type="button" class="ctl" data-sc="1" aria-label="Next panel">Next</button>
+        <span class="showcase__count" data-sc-count>1 / 6</span>
+      </div>
+    </div>
+    <div class="showcase__row">
+      <ul class="showcase__track" data-reveal style="--i:2">
+        <li class="panel is-lit">
+          <figure>
+            <span class="crop" style="--w:600;--h:430"><img src="images/timeline-dark.png" srcset="images/timeline-dark.png 2x" width="1200" height="760" alt="The Projects sidebar and five turns of a web app: numbers, prompts, agents, counts and ages" loading="lazy"></span>
+            <figcaption><strong>Every turn, in order</strong>Recorded intervals form a tree. The blue mark shows the current history position.</figcaption>
+          </figure>
+        </li>
+        <li class="panel">
+          <figure>
+            <span class="crop" style="--w:598;--h:190;--x:602;--y:52"><img src="images/branch-dark.png" srcset="images/branch-dark.png 2x" width="1200" height="760" alt="Turn 4, undone, on a side branch, with a Go to #4 button: undoes 1 turn and redoes 1 turn, restores 1 file" loading="lazy"></span>
+            <figcaption><strong>Branches stay</strong>Undo, then send a new prompt: the old turns stay on a side branch, and you can go back to them.</figcaption>
+          </figure>
+        </li>
+        <li class="panel">
+          <figure>
+            <span class="crop" style="--w:598;--h:196;--x:602;--y:52"><img src="images/restore-dark.png" srcset="images/restore-dark.png 2x" width="1200" height="760" alt="Turn 1 selected with a Go to #1 button: undoes 3 turns, restores 3 files; below, Revert Just This Turn and Restore File or Folder" loading="lazy"></span>
+            <figcaption><strong>Any turn, one click</strong>History navigation previews the move before applying it.</figcaption>
+          </figure>
+        </li>
+        <li class="panel">
+          <figure>
+            <span class="crop" style="--w:598;--h:170;--x:602;--y:408;background:#ffffff"><img src="images/timeline-light.png" srcset="images/timeline-light.png 2x" width="1200" height="760" alt="The files of turn 5 and the line diff of src/App.tsx" loading="lazy"></span>
+            <figcaption><strong>The exact lines</strong>Each file the turn changed, with its line diff.</figcaption>
+          </figure>
+        </li>
+        <li class="panel">
+          <figure>
+            <div class="notif" data-ui role="img" aria-label="Notification: #2 removed 5 files in api-server. Deleted src/health.ts, src/items.ts and src/routes.ts and 2 more. Undo #2 restores them.">
+              <img src="images/icon.svg" width="34" height="34" alt="">
+              <div>
+                <p class="n-app"><span>UndoTurn</span><span>now</span></p>
+                <p class="n-title">#2 removed 5 files in api-server</p>
+                <p class="n-body">Deleted src/health.ts, src/items.ts and src/routes.ts and 2 more. Undo #2 restores them.</p>
+              </div>
+              <span class="n-act">Undo #2</span>
+            </div>
+            <figcaption><strong>An alert on mass deletes</strong>When a turn deletes 50 files, or 3 files and a quarter of the project, a notification offers the undo.</figcaption>
+          </figure>
+        </li>
+        <li class="panel">
+          <figure>
+<pre class="term-panel" data-ui role="group" aria-label="Terminal"><code><span class="p">~/web-app $</span> undoturn undo
+restored: src/List.tsx
+<span class="warn">kept: changed after the turn: src/App.tsx</span></code></pre>
+            <figcaption><strong>Your edits are safe</strong>If you changed a file after the turn, undo keeps your version and says so. Only <code>--force</code> overwrites it.</figcaption>
+          </figure>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section menu-sec" id="menu" aria-labelledby="menu-h">
+  <div class="wrap grid menu-sec__grid">
+    <h2 class="menu-sec__h head" id="menu-h" data-reveal>In the menu bar</h2>
+
+    <div class="notes notes--l">
+      <button type="button" class="note-btn" data-part="running" style="--i:1" data-reveal><strong>The running turn</strong><span>The agent, when it started and its latest command, while the turn runs.</span></button>
+      <button type="button" class="note-btn" data-part="recent" style="--i:2" data-reveal><strong>Recent turns</strong><span>The latest prompts with their counts and age. Click one to open it in the timeline.</span></button>
+      <button type="button" class="note-btn" data-part="timeline" style="--i:3" data-reveal><strong>Open Timeline</strong><span>Every project and turn in one window, with the diffs. <kbd>⌘T</kbd></span></button>
+    </div>
+
+    <div class="menu-sec__panel" data-reveal style="--i:1">
+      <div class="menu" data-ui id="menu-ui" role="img" aria-label="The UndoTurn menu: a running turn in web-app, Undo #5, Redo, the four latest turns, Open Timeline, Manage Storage, Install Agent Hooks, Check Recording Setup, Pause Recording, Open at Login, About and Quit">
+        <div class="m-part" data-part="project">
+          <p class="m-head">web-app</p>
+        </div>
+        <div class="m-part" data-part="running">
+          <div class="m-item"><span class="t">Running: Move the API client into src/api</span><span class="s">Claude Code &middot; started 1 min</span><span class="s">$ mv src/client.ts src/api/client.ts</span></div>
+        </div>
+        <div class="m-part" data-part="undo">
+          <div class="m-item"><span class="t">Undo #5</span><span class="k">⌘Z</span><span class="s m-prev">Undoes 1 turn. Restores 1 file.</span></div>
+          <div class="m-item is-off"><span class="t">Redo</span><span class="s">Not available while a turn is running</span></div>
+        </div>
+        <div class="m-part" data-part="recent">
+          <div class="m-item"><span class="t"><span class="m-num">#5</span>&nbsp; Keep the App name but export Shell as an alias</span><span class="s">Head &middot; ~1 &middot; 2 h</span></div>
+          <div class="m-item is-undone"><span class="t"><span class="m-num">#4</span>&nbsp; Rename App to Shell and update imports</span><span class="s">~1 &middot; 2 h</span></div>
+          <div class="m-item"><span class="t"><span class="m-num">#3</span>&nbsp; Remove the unused README section and clean up old files</span><span class="s">&minus;1 &middot; 2 h</span></div>
+          <div class="m-item"><span class="t"><span class="m-num">#2</span>&nbsp; Retry failed requests up to three times with backoff</span><span class="s">~1 &middot; 2 h</span></div>
+        </div>
+        <div class="m-sep" aria-hidden="true"></div>
+        <div class="m-part" data-part="timeline">
+          <div class="m-item"><span class="t">Open Timeline</span><span class="k">⌘T</span></div>
+          <div class="m-item"><span class="t">Manage Storage…</span></div>
+          <div class="m-item"><span class="t">Install Agent Hooks…</span></div>
+          <div class="m-item"><span class="t">Check Recording Setup…</span></div>
+        </div>
+        <div class="m-part" data-part="pause">
+          <div class="m-item"><span class="t">Pause Recording</span></div>
+          <div class="m-item"><span class="t">Open at Login</span></div>
+        </div>
+        <div class="m-sep" aria-hidden="true"></div>
+        <div class="m-part" data-part="app">
+          <div class="m-item"><span class="t">About UndoTurn</span></div>
+          <div class="m-item"><span class="t">Quit UndoTurn</span><span class="k">⌘Q</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes notes--r">
+      <button type="button" class="note-btn" data-part="undo" style="--i:1" data-reveal><strong>Undo per project</strong><span>Each project has its own Undo and Redo. Under each, the turns and files it changes, before you click.</span></button>
+      <button type="button" class="note-btn" data-part="pause" style="--i:2" data-reveal><strong>Pause Recording</strong><span>Stop recording new turns for a while. Open at Login keeps UndoTurn in the menu bar.</span></button>
+    </div>
+  </div>
+</section>
+
+<section class="section cmds" id="commands" aria-labelledby="cmds-h">
+  <div class="wrap">
+    <div class="grid cmds__head">
+      <h2 class="head" id="cmds-h"><span class="muted" data-reveal>Most days,</span><span data-reveal style="--i:1">you need one command.</span></h2>
+      <a class="link" href="guide.html#command-reference" data-reveal style="--i:2">All options in the user guide</a>
+    </div>
+
+    <div class="tabs no-js-hide" role="tablist" aria-label="Command groups" data-reveal style="--i:2">
+      <button type="button" class="tab" role="tab" id="tab-back" aria-selected="true" aria-controls="panel-back"><span class="tab__label">Go back</span><span class="tab__count">6 commands</span></button>
+      <button type="button" class="tab" role="tab" id="tab-look" aria-selected="false" aria-controls="panel-look" tabindex="-1"><span class="tab__label">Look closer</span><span class="tab__count">3 commands</span></button>
+      <button type="button" class="tab" role="tab" id="tab-setup" aria-selected="false" aria-controls="panel-setup" tabindex="-1"><span class="tab__label">Set up</span><span class="tab__count">4 commands</span></button>
+      <button type="button" class="tab" role="tab" id="tab-rest" aria-selected="false" aria-controls="panel-rest" tabindex="-1"><span class="tab__label">The rest</span><span class="tab__count">3 commands</span></button>
+    </div>
+
+    <div class="bands" role="tabpanel" id="panel-back" aria-labelledby="tab-back" data-reveal style="--i:3">
+      <h3>Go back</h3>
+      <div class="band"><code>undoturn undo</code><p>Put back the files from before the last turn.</p><p class="band__app">⌘Z in the timeline</p></div>
+      <div class="band"><code>undoturn redo</code><p>Apply the undone turn again.</p><p class="band__app">⇧⌘Z in the timeline</p></div>
+      <div class="band"><code>undoturn goto 2</code><p>Move the project to turn 2, also on another branch.</p><p class="band__app">Go to #2</p></div>
+      <div class="band"><code>undoturn revert 2</code><p>Reverse one recorded turn while keeping later conflicting edits.</p><p class="band__app">Revert Just This Turn…</p></div>
+      <div class="band"><code>undoturn restore src --at 2 --after</code><p>Restore recorded folder versions without moving history.</p><p class="band__app">Restore File or Folder…</p></div>
+      <div class="band"><code>undoturn list</code><p>Show the turns, newest first. <code>*</code> marks the current turn.</p><p class="band__app">The timeline</p></div>
+    </div>
+    <div class="bands" role="tabpanel" id="panel-look" aria-labelledby="tab-look">
+      <h3>Look closer</h3>
+      <div class="band"><code>undoturn show 3</code><p>Show the prompt, the agent and the changed files of turn 3.</p><p class="band__app">Select #3 in the timeline</p></div>
+      <div class="band"><code>undoturn diff 3</code><p>Show the line diff of turn 3.</p><p class="band__app">The diff below the files</p></div>
+      <div class="band"><code>undoturn label 2 "works"</code><p>Give turn 2 a name.</p><p class="band__app">Add Label… in the ⋯ menu</p></div>
+    </div>
+    <div class="bands" role="tabpanel" id="panel-setup" aria-labelledby="tab-setup">
+      <h3>Set up</h3>
+      <div class="band"><code>undoturn init</code><p>Add the hooks to all supported agents and register this project.</p><p class="band__app">Terminal only</p></div>
+      <div class="band"><code>undoturn doctor</code><p>Check the hooks, the store and the recent hook errors.</p><p class="band__app">Terminal only</p></div>
+      <div class="band"><code>undoturn service install</code><p>Start the optional background service at login.</p><p class="band__app">Terminal only</p></div>
+      <div class="band"><code>undoturn uninstall</code><p>Remove the hooks. The history stays.</p><p class="band__app">Terminal only</p></div>
+    </div>
+    <div class="bands" role="tabpanel" id="panel-rest" aria-labelledby="tab-rest">
+      <h3>The rest</h3>
+      <div class="band"><code>undoturn run -- make build</code><p>Record one turn around any command.</p><p class="band__app">Terminal only</p></div>
+      <div class="band"><code>undoturn pause</code><p>Stop recording. <code>undoturn resume</code> starts it again.</p><p class="band__app">Pause Recording</p></div>
+      <div class="band"><code>undoturn gc</code><p>Remove stored versions of undone turns and other branches after 30 days, or the oldest ones above 5 GiB.</p><p class="band__app">Terminal only</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section stats" id="numbers" aria-labelledby="stats-h">
+  <div class="wrap grid">
+    <h2 class="stats__h head" id="stats-h"><span data-reveal>Small, fast,</span><span data-reveal style="--i:1">and quiet.</span></h2>
+    <dl class="figs">
+      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:1">20<span class="fig__u">ms</span></dt><dd class="fig__c" data-reveal style="--i:2">earlier Claude Code/Codex hook median with the optional FSEvents service, on a 20,000-file project and M1 Max. This does not measure the new integrations.</dd></div>
+      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:2">35<span class="fig__u">ms</span></dt><dd class="fig__c" data-reveal style="--i:3">earlier hook median without the service, on the same project. Shared recording and pre-command checkpoints have not been benchmarked.</dd></div>
+      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:3">13<span class="fig__u">MB</span></dt><dd class="fig__c" data-reveal style="--i:4">earlier idle app measurement: 12 to 13 MB. The new timeline and recording features have not been remeasured.</dd></div>
+      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:4">10</dt><dd class="fig__c" data-reveal style="--i:5">agent CLIs in one history: Claude Code, Codex, Gemini, Cursor, Copilot, Droid, Devin, OpenCode, Pi and Oh My Pi.</dd></div>
+      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:5">0</dt><dd class="fig__c" data-reveal style="--i:6">lines of network code. No account, no telemetry. The history stays on your Mac.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="section cta" id="install" aria-labelledby="cta-h">
+  <div class="wrap grid cta__grid">
+    <div class="cta__tile" data-reveal>
+      <h2 id="cta-h">Build it from source</h2>
+      <p>UndoTurn is pre-release. You need macOS 14 or later, and Xcode 26 or the Swift 6.2 toolchain. Then run <code>undoturn init</code> once in your project. It adds the hooks to all supported agents and registers the project. <code>undoturn uninstall</code> removes the hooks. The history stays.</p>
+      <div class="cta__field">
+        <code id="clone-cmd">git clone https://github.com/<wbr>HugoLopes45/<wbr>undoturn.git</code>
+        <button type="button" class="cta__copy" data-copy="#clone-cmd">Copy</button>
+      </div>
+      <p class="cta__links"><a href="guide.html">Read the user guide</a><a href="https://github.com/HugoLopes45/undoturn">See the code on GitHub</a><span class="sr-only" role="status" data-copy-status></span></p>
+    </div>
+    <div class="cta__side" data-reveal="open" style="--i:1">
+      <img src="images/restore-dark.png" srcset="images/restore-dark.png 2x" width="1200" height="760" alt="The UndoTurn timeline: Go to #1 undoes 3 turns and restores 3 files." loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section class="section faq" id="faq" aria-labelledby="faq-h">
+  <div class="wrap">
+    <div class="faq__list">
+      <h2 class="faq__h head" id="faq-h" data-reveal>Common questions</h2>
+      <div class="faq__item">
+        <h3 data-reveal style="--i:1"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a1">Does UndoTurn replace Git?</button></h3>
+        <div class="faq__a" id="a1"><p>No. Git keeps the history that you decide to keep. UndoTurn protects the minutes between two commits, when an agent changes many files at once.</p></div>
+      </div>
+      <div class="faq__item">
+        <h3 data-reveal style="--i:2"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a2">Which agents does it work with?</button></h3>
+        <div class="faq__a" id="a2"><p>Claude Code, Codex CLI, Gemini CLI, Cursor CLI, GitHub Copilot CLI, Factory Droid, Devin CLI, OpenCode, Pi and Oh My Pi. Outside-path coverage depends on mapped tool payloads and parseable shell paths. For any other tool, use <code>undoturn run -- &lt;command&gt;</code>.</p><p>Claude Code, Codex, Gemini and Cursor pre-tool hooks also gate selected destructive commands and checkpoint recognized risky commands. Other integrations record without these guards. This is not a sandbox, and <code>.git</code> is not backed up.</p></div>
+      </div>
+      <div class="faq__item">
+        <h3 data-reveal style="--i:3"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a3">Does my code leave my Mac?</button></h3>
+        <div class="faq__a" id="a3"><p>No. UndoTurn has no network code. The history is in <code class="path">~/Library/Application Support/UndoTurn</code>, and only your user can read it.</p></div>
+      </div>
+      <div class="faq__item">
+        <h3 data-reveal style="--i:4"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a4">Does it store my secrets?</button></h3>
+        <div class="faq__a" id="a4"><p>Yes, unless you exclude them. UndoTurn records <code>.env</code> files even when <code>.gitignore</code> ignores them, so that an undo can restore them. File copies are not redacted. They stay on your Mac with mode <code>0600</code>. To keep them out, list them in <code>.undoturnignore</code>. The <a class="link-plain" href="guide.html#ignored-files">user guide</a> tells how to remove versions already stored.</p></div>
+      </div>
+      <div class="faq__item">
+        <h3 data-reveal style="--i:5"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a5">What if I edit files while the agent works?</button></h3>
+        <div class="faq__a" id="a5"><p>A change made during a turn belongs to that turn, so an undo of that turn also undoes your change. A change made after the turn is safe: undo keeps it.</p></div>
+      </div>
+      <div class="faq__item">
+        <h3 data-reveal style="--i:6"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a6">How much disk space does it use?</button></h3>
+        <div class="faq__a" id="a6"><p>Each file version is an APFS clone, which uses almost no space until the original file changes. <code>undoturn gc</code> removes old versions of undone turns after 30 days, or the oldest ones above 5 GiB.</p></div>
+      </div>
+      <div class="faq__item">
+        <h3 data-reveal style="--i:7"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a7">Is UndoTurn a sandbox or a backup?</button></h3>
+        <div class="faq__a" id="a7"><p>No. UndoTurn is a recovery tool. It can not stop an agent, and its store is on the same disk as your projects. Use Time Machine as well.</p></div>
+      </div>
+      <div class="faq__item">
+        <h3 data-reveal style="--i:8"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a8">Is there a release to download?</button></h3>
+        <div class="faq__a" id="a8"><p>Not yet. Until the first release, <a class="link-plain" href="#install">build from source</a>. <code>scripts/package-app.sh</code> builds a local DMG with the menu bar app, the CLI and the service.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <p>UndoTurn. Undo for coding agents on macOS.</p>
+  <ul class="footer__links" aria-label="Project links">
+    <li><a class="link" href="#install">Build from source</a></li>
+    <li><a class="link" href="https://github.com/HugoLopes45/undoturn">GitHub</a></li>
+    <li><a class="link" href="guide.html">User guide</a></li>
+    <li><a class="link" href="https://github.com/HugoLopes45/undoturn/blob/main/docs/THREAT-MODEL.md">Threat model</a></li>
+    <li><a class="link" href="https://github.com/HugoLopes45/undoturn/blob/main/LICENSE">License</a></li>
+  </ul>
+  <p>2026 &middot; Apache-2.0</p>
+</footer>
+
+<script>
+(() => {
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  // A focused button that turns disabled drops focus to the page; give focus to its partner instead.
+  const handOff = (focused, a, b) => {
+    if (focused === a && a.disabled) b.focus();
+    if (focused === b && b.disabled) a.focus();
+  };
+
+  // Live ledger: the README's api-server story. head = the turn the files match now (0 = before #1).
+  const ledger = document.getElementById('ledger');
+  if (ledger) {
+    const undoBtn = ledger.querySelector('[data-act="undo"]');
+    const redoBtn = ledger.querySelector('[data-act="redo"]');
+    const banner = ledger.querySelector('.banner');
+    const stateWord = ledger.querySelector('[data-state]');
+    const caret = ledger.querySelector('.caret');
+    const rows = [...ledger.querySelectorAll('.row')];
+    const said = {
+      'undo-2': 'Undid #2: restored 5 files',
+      'undo-1': 'Undid #1: restored 1 file, removed 1 file',
+      'redo-1': 'Redid #1: restored 2 files',
+      'redo-2': 'Redid #2: removed 5 files',
+    };
+    let head = 2;
+    const render = () => {
+      rows.forEach((row) => row.classList.toggle('is-undone', Number(row.dataset.turn) > head));
+      caret.style.visibility = head === 0 ? 'hidden' : 'visible';
+      if (head > 0) caret.style.setProperty('--caret', String(2 - head));
+      stateWord.textContent = head >= 2 ? 'Current' : 'Undone';
+      undoBtn.textContent = head > 0 ? `Undo #${head}` : 'Undo';
+      undoBtn.disabled = head === 0;
+      redoBtn.textContent = head < 2 ? `Redo #${head + 1}` : 'Redo';
+      redoBtn.disabled = head === 2;
+    };
+    const move = (dir) => {
+      if (dir < 0 && head > 0) { banner.textContent = said[`undo-${head}`]; head -= 1; }
+      else if (dir > 0 && head < 2) { head += 1; banner.textContent = said[`redo-${head}`]; }
+      else return;
+      const focused = document.activeElement;
+      render();
+      // Keeps ⌘Z inside the ledger.
+      handOff(focused, undoBtn, redoBtn);
+    };
+    undoBtn.addEventListener('click', () => move(-1));
+    redoBtn.addEventListener('click', () => move(1));
+    ledger.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        move(event.shiftKey ? 1 : -1);
+      }
+    });
+    render();
+  }
+
+  // Hero reel: held by scroll on wide screens, buttons elsewhere.
+  const hero = document.querySelector('.hero');
+  const reel = document.querySelector('.reel');
+  if (hero && reel) {
+    const frames = [...reel.querySelectorAll('.frame')];
+    const count = reel.querySelector('.reel__count');
+    const caption = reel.querySelector('.reel__caption');
+    const prev = reel.querySelector('[data-reel="-1"]');
+    const next = reel.querySelector('[data-reel="1"]');
+    const heldQuery = matchMedia('(min-width: 75em) and (prefers-reduced-motion: no-preference)');
+    let current = 0;
+    const setCurrent = (index) => {
+      const focused = document.activeElement;
+      current = index;
+      // Held by scroll there are no Previous and Next buttons, so frames without controls stay readable.
+      frames.forEach((frame, i) => { frame.classList.toggle('is-current', i === index); frame.inert = i !== index && (!heldQuery.matches || frame.querySelector('button') !== null); });
+      count.textContent = `${index + 1} / ${frames.length}`;
+      caption.textContent = frames[index].dataset.caption;
+      prev.disabled = index === 0;
+      next.disabled = index === frames.length - 1;
+      handOff(focused, prev, next);
+      // A control that went inert or hidden would drop focus to the page.
+      const now = reel.contains(document.activeElement) ? document.activeElement : focused;
+      if (reel.contains(now) && (now.closest('[inert]') || now.offsetParent === null)) reel.focus({ preventScroll: true });
+    };
+    const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    let queued = false;
+    const place = () => {
+      queued = false;
+      if (!heldQuery.matches) return;
+      const run = hero.offsetHeight - innerHeight;
+      const p = run > 0 ? Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / run)) : 0;
+      const raw = p * (frames.length - 1);
+      const seg = Math.min(Math.floor(raw), frames.length - 2);
+      const t = Math.min(1, Math.max(0, (raw - seg - 0.2) / 0.6));
+      const pos = seg + ease(t);
+      reel.style.setProperty('--pos', pos.toFixed(4));
+      const index = Math.round(pos);
+      if (index !== current) setCurrent(index);
+    };
+    const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(place); } };
+    const applyMode = () => {
+      hero.classList.toggle('is-held', heldQuery.matches);
+      hero.classList.toggle('is-live', heldQuery.matches);
+      setCurrent(current);
+      if (heldQuery.matches) place();
+      else reel.style.setProperty('--pos', String(current));
+    };
+    const go = (by) => {
+      const index = Math.min(frames.length - 1, Math.max(0, current + by));
+      reel.style.setProperty('--pos', String(index));
+      setCurrent(index);
+    };
+    [prev, next].forEach((button) => button.addEventListener('click', () => go(Number(button.dataset.reel))));
+    const view = reel.querySelector('.reel__window');
+    let startX = null;
+    view.addEventListener('pointerdown', (event) => { startX = event.isPrimary ? event.clientX : null; });
+    view.addEventListener('pointercancel', () => { startX = null; });
+    view.addEventListener('dragstart', (event) => event.preventDefault());
+    view.addEventListener('pointerup', (event) => {
+      if (startX === null) return;
+      const dx = event.clientX - startX; startX = null;
+      if (!heldQuery.matches && Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+    });
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll);
+    heldQuery.addEventListener('change', applyMode);
+    applyMode();
+  }
+
+  // How it works: the statement in the middle of the screen sets the state of the held fragment.
+  const story = document.getElementById('story');
+  const steps = [...document.querySelectorAll('.step')];
+  if (story && steps.length) {
+    const q = (sel) => story.querySelector(sel);
+    const stepCode = q('[data-s-step]');
+    const latestCode = q('[data-s-latest-code]');
+    const timer = q('[data-s-timer]');
+    const lines = ['$ mv src/client.ts src/api/client.ts', "$ sed -i '' 's/fetchJSON/getJSON/g' src/App.tsx src/List.tsx", 'Writing src/api/index.ts'];
+    // Narrow screens show the stage above the steps: a timer plays the three states until the reader picks a step.
+    const narrow = matchMedia('(max-width: 63.99em)');
+    let step = 0, seconds = 1, lineIndex = 0, tick = null, visible = false, dwell = 0, picked = false;
+    // Narrow screens show the details of the steps in one slot under the statements.
+    const note = document.createElement('div');
+    note.className = 'how__note';
+    steps.forEach((el) => {
+      const detail = el.querySelector('.step__t').cloneNode(true);
+      detail.removeAttribute('data-reveal');
+      detail.removeAttribute('style');
+      note.append(detail);
+    });
+    steps[0].parentElement.after(note);
+    const showLine = (text) => { stepCode.textContent = text; latestCode.textContent = text; };
+    const setStep = (n) => {
+      if (n === step) return;
+      step = n;
+      story.dataset.step = String(n);
+      steps.forEach((el, i) => {
+        const on = Number(el.dataset.step) === n;
+        el.classList.toggle('is-active', on);
+        note.children[i].classList.toggle('is-on', on);
+        const label = el.querySelector('.step__s');
+        if (on) label.setAttribute('aria-current', 'step');
+        else label.removeAttribute('aria-current');
+        if (label.hasAttribute('role')) label.setAttribute('aria-pressed', String(on));
+      });
+      const done = n === 3;
+      q('[data-s-running]').classList.toggle('is-hidden', done);
+      q('[data-s-six]').classList.toggle('is-hidden', !done);
+      q('[data-s-running-detail]').classList.toggle('is-hidden', done);
+      q('[data-s-undone-detail]').classList.toggle('is-hidden', !done);
+      q('[data-s-latest]').classList.toggle('is-hidden', n === 1);
+      q('[data-s-banner]').textContent = done ? 'Undid #6: restored 3 files, removed 2 files' : '';
+      q('[data-s-caret]').style.setProperty('--caret', done ? '1' : '0');
+      const redo = q('[data-s-redo]');
+      redo.textContent = done ? 'Redo #6' : 'Redo';
+      redo.style.color = done ? '' : '#6a6a6f';
+      if (n === 1) { seconds = 1; showLine(''); }
+      if (n === 2) { lineIndex = 0; showLine(lines[0]); }
+    };
+    const loop = () => {
+      if (narrow.matches && !reduced.matches && !picked && ++dwell >= 4) { dwell = 0; setStep(step % 3 + 1); return; }
+      if (step === 1 || step === 2) { seconds += 1; timer.textContent = `0:${String(seconds % 60).padStart(2, '0')}`; }
+      if (step === 2 && !reduced.matches && seconds % 2 === 0) {
+        stepCode.classList.add('is-leaving');
+        setTimeout(() => { lineIndex = (lineIndex + 1) % lines.length; showLine(lines[lineIndex]); stepCode.classList.remove('is-leaving'); }, 380);
+      }
+    };
+    const run = () => { if (visible && !tick) tick = setInterval(loop, 1000); if (!visible && tick) { clearInterval(tick); tick = null; } story.closest('.how').classList.toggle('is-paused', !visible); };
+    let io = null;
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver((entries) => {
+        if (narrow.matches) return;
+        for (const entry of entries) if (entry.isIntersecting) setStep(Number(entry.target.dataset.step));
+      }, { rootMargin: '-45% 0px -45% 0px' });
+      steps.forEach((el) => io.observe(el));
+      new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; run(); }).observe(story);
+    }
+    const labels = steps.map((el) => el.querySelector('.step__s'));
+    const pick = (i) => { if (narrow.matches) { picked = true; setStep(i + 1); } };
+    const applyNarrow = () => labels.forEach((el) => {
+      if (narrow.matches) { el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-pressed', String(el.hasAttribute('aria-current'))); }
+      else { el.removeAttribute('role'); el.removeAttribute('tabindex'); el.removeAttribute('aria-pressed'); }
+    });
+    labels.forEach((el, i) => {
+      el.addEventListener('click', () => pick(i));
+      el.addEventListener('keydown', (event) => {
+        if (narrow.matches && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); pick(i); }
+      });
+    });
+    narrow.addEventListener('change', () => {
+      applyNarrow();
+      // The observer reports only changes. Start from the load state, then observe again so the step in the middle of the screen sets the state.
+      if (io && !narrow.matches) { setStep(1); steps.forEach((el) => { io.unobserve(el); io.observe(el); }); }
+    });
+    applyNarrow();
+    setStep(1);
+  }
+
+  // Showcase: one lit panel, the neighbours dimmed and inert.
+  const showcase = document.querySelector('.showcase');
+  if (showcase) {
+    const track = showcase.querySelector('.showcase__track');
+    const row = showcase.querySelector('.showcase__row');
+    const panels = [...track.querySelectorAll('.panel')];
+    const name = showcase.querySelector('[data-sc-name]');
+    const text = showcase.querySelector('[data-sc-text]');
+    const counter = showcase.querySelector('[data-sc-count]');
+    const prev = showcase.querySelector('[data-sc="-1"]');
+    const next = showcase.querySelector('[data-sc="1"]');
+    let lit = 0;
+    const centre = () => {
+      const panel = panels[lit];
+      const offset = panel.offsetLeft + panel.offsetWidth / 2 - row.clientWidth / 2;
+      track.style.transform = `translate3d(${-Math.max(0, offset)}px, 0, 0)`;
+    };
+    const light = (index) => {
+      const focused = document.activeElement;
+      lit = Math.min(panels.length - 1, Math.max(0, index));
+      panels.forEach((panel, i) => { panel.classList.toggle('is-lit', i === lit); panel.inert = i !== lit; });
+      const caption = panels[lit].querySelector('figcaption');
+      const title = caption.querySelector('strong').textContent;
+      // The region is live and the page loads with panel 1 described: write only on change.
+      if (name.textContent !== title) {
+        name.textContent = title;
+        text.innerHTML = caption.innerHTML.replace(/<strong>.*?<\/strong>/, '');
+      }
+      counter.textContent = `${lit + 1} / ${panels.length}`;
+      prev.disabled = lit === 0;
+      next.disabled = lit === panels.length - 1;
+      handOff(focused, prev, next);
+      centre();
+    };
+    prev.addEventListener('click', () => light(lit - 1));
+    next.addEventListener('click', () => light(lit + 1));
+    showcase.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowRight') light(lit + 1);
+      if (event.key === 'ArrowLeft') light(lit - 1);
+    });
+    let startX = null;
+    row.addEventListener('pointerdown', (event) => { startX = event.isPrimary ? event.clientX : null; });
+    row.addEventListener('pointercancel', () => { startX = null; });
+    row.addEventListener('dragstart', (event) => event.preventDefault());
+    row.addEventListener('pointerup', (event) => {
+      if (startX === null) return;
+      const dx = event.clientX - startX; startX = null;
+      if (Math.abs(dx) > 40) light(lit + (dx < 0 ? 1 : -1));
+    });
+    addEventListener('resize', centre);
+    light(0);
+  }
+
+  // Menu bar notes: pointing at a note picks out its part of the menu.
+  const menu = document.getElementById('menu-ui');
+  if (menu) {
+    const focus = (part) => {
+      menu.classList.toggle('is-focusing', Boolean(part));
+      menu.querySelectorAll('.m-part').forEach((el) => el.classList.toggle('is-target', el.dataset.part === part));
+    };
+    document.querySelectorAll('.note-btn').forEach((note) => {
+      note.addEventListener('pointerenter', () => focus(note.dataset.part));
+      note.addEventListener('pointerleave', () => focus(null));
+      note.addEventListener('focus', () => focus(note.dataset.part));
+      note.addEventListener('blur', () => focus(null));
+      note.addEventListener('click', () => focus(note.dataset.part));
+    });
+    // Wide screens: each note sits level with its part of the menu, below the note above it.
+    const wide = matchMedia('(min-width: 64em)');
+    const pageTop = (el) => { let y = 0; for (let n = el; n; n = n.offsetParent) y += n.offsetTop; return y; };
+    const placeNotes = () => document.querySelectorAll('.notes').forEach((column) => {
+      let floor = 0;
+      column.querySelectorAll('.note-btn').forEach((note) => {
+        const part = menu.querySelector(`.m-part[data-part="${note.dataset.part}"]`);
+        // 12px lines up the first line of the note with the first line of the part.
+        const y = Math.max(floor, pageTop(part) - pageTop(column) - 12);
+        note.style.setProperty('--y', `${y}px`);
+        floor = y + note.offsetHeight + 12;
+      });
+      column.style.minHeight = wide.matches ? `${floor}px` : '';
+    });
+    addEventListener('resize', placeNotes);
+    wide.addEventListener('change', placeNotes);
+    placeNotes();
+  }
+
+  // Command tabs (all groups stay visible without JavaScript).
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  if (tabs.length) {
+    const select = (tab, moveFocus) => {
+      tabs.forEach((t) => {
+        const on = t === tab;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+      });
+      if (moveFocus) tab.focus();
+    };
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => select(tab, false));
+      tab.addEventListener('keydown', (event) => {
+        const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+        if (step) { event.preventDefault(); select(tabs[(i + step + tabs.length) % tabs.length], true); }
+      });
+    });
+    select(tabs[0], false);
+  }
+
+  // Copy the clone command.
+  document.querySelectorAll('[data-copy]').forEach((button) => {
+    const source = document.querySelector(button.dataset.copy);
+    const status = document.querySelector('[data-copy-status]');
+    let reset = null;
+    button.addEventListener('click', async () => {
+      // Emptied first, so a second copy is announced again.
+      status.textContent = '';
+      try {
+        await navigator.clipboard.writeText(source.textContent);
+        button.textContent = 'Copied';
+        status.textContent = 'Command copied';
+      } catch {
+        getSelection().selectAllChildren(source);
+        button.textContent = 'Selected';
+        status.textContent = 'Command selected, press Command C to copy';
+      }
+      clearTimeout(reset);
+      reset = setTimeout(() => { button.textContent = 'Copy'; }, 1800);
+    });
+  });
+
+  // Questions: one answer open at a time.
+  const questions = [...document.querySelectorAll('.faq__q')];
+  if (questions.length) {
+    const open = (q) => questions.forEach((other) => {
+      const on = other === q;
+      other.setAttribute('aria-expanded', String(on));
+      document.getElementById(other.getAttribute('aria-controls')).hidden = !on;
+    });
+    questions.forEach((q) => q.addEventListener('click', () => open(q)));
+    open(questions[0]);
+  }
+
+  // Reveal once on entry; never leaves content hidden.
+  const targets = document.querySelectorAll('[data-reveal]');
+  if (!('IntersectionObserver' in window)) targets.forEach((el) => el.classList.add('is-in'));
+  else {
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) if (entry.isIntersecting) { entry.target.classList.add('is-in'); io.unobserve(entry.target); }
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
+    targets.forEach((el) => io.observe(el));
+    addEventListener('load', () => setTimeout(() => targets.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.top < innerHeight && r.bottom > 0) el.classList.add('is-in');
+    }), 2500));
+  }
+})();
+</script>
+</body>
+</html>

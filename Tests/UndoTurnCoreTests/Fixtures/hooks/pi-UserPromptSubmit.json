@@ -1,0 +1,7 @@
+{
+  "hook_event_name": "UserPromptSubmit",
+  "session_id": "00000000-0000-4000-8000-000000000001",
+  "cwd": "/private/tmp/probe/project",
+  "prompt": "Run the shell command `echo hi > shell.txt`, then create hello.txt containing hi with your file tool, then reply with exactly: done",
+  "model": "opencode-go/beam-free"
+}

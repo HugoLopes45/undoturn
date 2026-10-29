@@ -1,0 +1,12 @@
+{
+  "sessionId": "00000000-0000-4000-8000-000000000001",
+  "timestamp": 1792757826232,
+  "cwd": "/private/tmp/cap/project",
+  "toolName": "bash",
+  "toolArgs": {
+    "command": "echo hi > shell.txt",
+    "description": "Create shell.txt via shell command",
+    "mode": "sync",
+    "initial_wait": 10
+  }
+}

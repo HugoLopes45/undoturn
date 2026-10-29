@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$pagetitle$</title>
+<meta name="description" content="$description-meta$">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="images/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="guide.css">
+<script src="guide.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to the guide</a>
+<header class="site">
+  <a class="wordmark" href="./"><img src="images/icon.svg" width="24" height="24" alt=""> UndoTurn</a>
+  <nav aria-label="Site">
+    <ul>
+      <li><a href="./">Overview</a></li>
+      <li><a href="https://github.com/HugoLopes45/undoturn">GitHub</a></li>
+    </ul>
+  </nav>
+</header>
+<div class="layout">
+  <nav class="rail" aria-labelledby="rail-label">
+    <p class="rail__label" id="rail-label">Contents</p>
+    <ol>
+$for(chapters)$
+      <li><a href="#$chapters.id$">$chapters.text$</a></li>
+$endfor$
+    </ol>
+  </nav>
+  <main id="content">
+    <h1>$title$</h1>
+    <details class="toc">
+      <summary>Contents</summary>
+      <nav aria-label="Contents">
+        <ol>
+$for(chapters)$
+          <li><a href="#$chapters.id$">$chapters.text$</a></li>
+$endfor$
+        </ol>
+      </nav>
+    </details>
+$body$
+  </main>
+</div>
+<footer class="site-footer">
+  <p>This page is generated from <a href="https://github.com/HugoLopes45/undoturn/blob/main/docs/GUIDE.md">docs/GUIDE.md</a>.</p>
+  <ul>
+    <li><a href="https://github.com/HugoLopes45/undoturn/blob/main/docs/THREAT-MODEL.md">Threat model</a></li>
+    <li><a href="https://github.com/HugoLopes45/undoturn/blob/main/SECURITY.md">Security</a></li>
+    <li><a href="https://github.com/HugoLopes45/undoturn/blob/main/LICENSE">License</a></li>
+  </ul>
+</footer>
+</body>
+</html>

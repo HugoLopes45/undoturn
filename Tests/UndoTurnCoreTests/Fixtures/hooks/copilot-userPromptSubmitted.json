@@ -1,0 +1,6 @@
+{
+  "sessionId": "00000000-0000-4000-8000-000000000001",
+  "timestamp": 1792757818598,
+  "cwd": "/private/tmp/cap/project",
+  "prompt": "Run the shell command `echo hi > shell.txt`, then create a file named hello.txt containing hi with your file tool, then reply with exactly: done"
+}

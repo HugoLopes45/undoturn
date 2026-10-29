@@ -1,0 +1,7 @@
+{
+  "hook_event_name": "Stop",
+  "session_id": "00000000-0000-4000-8000-000000000001",
+  "cwd": "/private/tmp/probe/project",
+  "model": "opencode-go/beam-free",
+  "last_assistant_message": "done"
+}

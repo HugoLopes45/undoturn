@@ -1,0 +1,1 @@
+{"hook_event_name":"PreToolUse","session_id":"00000000-0000-4000-8000-000000000003","cwd":"/private/tmp/probe/project","tool_name":"write","tool_input":{"content":"hi\n","filePath":"hello.txt"}}

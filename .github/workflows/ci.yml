@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Toolchain
+        run: swift --version
+      - name: Format
+        run: swift format lint --strict --recursive Sources Tests Package.swift
+      - name: Build
+        run: swift build -c release
+      - name: Hook links no Foundation
+        run: |
+          otool -L .build/release/undoturn
+          ! otool -L .build/release/undoturn | grep -q Foundation
+      - name: Test
+        run: swift test

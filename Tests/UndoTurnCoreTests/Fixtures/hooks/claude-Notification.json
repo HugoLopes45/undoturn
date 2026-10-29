@@ -1,0 +1,10 @@
+{
+  "session_id": "11111111-1111-4111-8111-111111111111",
+  "transcript_path": "/Users/dev/.claude/projects/-Users-dev-project-claude/11111111-1111-4111-8111-111111111111.jsonl",
+  "cwd": "/Users/dev/project-claude",
+  "scratchpad_dir": "/private/tmp/claude-501/-Users-dev-project-claude/11111111-1111-4111-8111-111111111111/scratchpad",
+  "prompt_id": "22222222-2222-4222-8222-222222222222",
+  "hook_event_name": "Notification",
+  "message": "Claude needs your permission",
+  "notification_type": "permission_prompt"
+}

@@ -1,0 +1,9 @@
+{
+  "session_id": "77777777-7777-7777-8777-777777777777",
+  "turn_id": "88888888-8888-7888-8888-888888888888",
+  "transcript_path": "/Users/dev/.codex/sessions/2026/10/23/rollout-2026-10-23T11-08-22-77777777-7777-7777-8777-777777777777.jsonl",
+  "cwd": "/private/tmp/undoturn-capture/project",
+  "hook_event_name": "Interrupt",
+  "model": "gpt-6.1-sol",
+  "permission_mode": "bypassPermissions"
+}

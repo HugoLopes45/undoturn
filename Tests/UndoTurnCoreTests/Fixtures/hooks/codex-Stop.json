@@ -1,0 +1,11 @@
+{
+  "session_id": "33333333-3333-7333-8333-333333333333",
+  "turn_id": "44444444-4444-7444-8444-444444444444",
+  "transcript_path": "/Users/dev/.codex/sessions/2026/10/22/rollout-2026-10-22T12-44-54-33333333-3333-7333-8333-333333333333.jsonl",
+  "cwd": "/private/tmp/undoturn-codex-capture/project",
+  "hook_event_name": "Stop",
+  "model": "gpt-6.1-sol",
+  "permission_mode": "bypassPermissions",
+  "stop_hook_active": false,
+  "last_assistant_message": "Created `hello.txt` containing `hi`."
+}

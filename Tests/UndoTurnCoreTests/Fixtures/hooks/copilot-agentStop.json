@@ -1,0 +1,8 @@
+{
+  "sessionId": "00000000-0000-4000-8000-000000000001",
+  "timestamp": 1792757836908,
+  "cwd": "/private/tmp/cap/project",
+  "transcriptPath": "/tmp/cap/copilot/session-state/00000000-0000-4000-8000-000000000001/events.jsonl",
+  "stopReason": "end_turn",
+  "stop_hook_active": false
+}

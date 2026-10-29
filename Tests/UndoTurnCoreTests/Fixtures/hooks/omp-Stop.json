@@ -1,0 +1,7 @@
+{
+  "hook_event_name": "Stop",
+  "session_id": "00000000-0000-4000-8000-000000000002",
+  "cwd": "/tmp/probe/project",
+  "model": "anthropic/claude-opus-5-5",
+  "last_assistant_message": "Not done: the harness blocked `echo hi > shell.txt` and told me to use the `write` tool. Because of that, `shell.txt` was not created.\n\n`hello.txt` was created with the content `hi`.\n\nI could create `shell.txt` with the file tool instead, or you can run the command yourself."
+}
