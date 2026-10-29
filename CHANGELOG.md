@@ -12,6 +12,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 - Install the bundled CLI and service links from **Install Command-Line Tools…** in the app, choosing a writable folder without a separate download or automatic shell changes.
 - The menu, the timeline, the storage window and folder panels show the UndoTurn icon and name, so you always know which app you are in. While the storage window is open, UndoTurn also shows in the Dock and the menu bar.
+- Confirmations to delete history or restore files open as a sheet on their window and list the project, the turns and the space or files they affect.
 - Agents can inspect and restore history through `undoturn mcp`, a stdio MCP server. Moves retain conflict protection and never force writes (ADR 0036).
 - `undoturn storage` lists stored histories and reclaimable space; `storage remove <root>` deletes one history without touching project files. Both support JSON.
 - `undoturn restore <path…> --at <id>` restores selected files or folders without moving history; `--after` selects the state after the turn. History moves and file restoration support `--dry-run` (ADR 0037).

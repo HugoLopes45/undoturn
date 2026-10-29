@@ -57,23 +57,27 @@ import Observation
 
   private func install() {
     guard !isBusy, let directory = installationDirectory() else { return }
-    let alert = NSAlert()
-    alert.messageText = "Install Agent Hooks?"
-    alert.informativeText =
-      "UndoTurn will run its bundled CLI init command, update supported agents' hook settings "
-      + "in your account, and register this project:\n\n\(directory.path)\n\n"
-      + "Existing settings are backed up by the CLI. Hooks are not a sandbox and do not replace agent approvals."
-    alert.addButton(withTitle: "Install Agent Hooks")
-    alert.addButton(withTitle: "Cancel")
-    NSApp.activate()
-    guard alert.runModal() == .alertFirstButtonReturn else { return }
-    run(
-      arguments: ["init"], directory: directory, operation: "Installing Agent Hooks…",
-      title: "Agent Hook Installation",
-      message:
-        "Review the actual command output below. In Codex, run /hooks once to trust UndoTurn. "
-        + "Restart agent sessions if required. Installation alone does not prove hooks are running."
-    )
+    Task {
+      guard
+        await ConfirmationAlert.confirm(
+          title: "Install Agent Hooks?",
+          message:
+            "UndoTurn runs its bundled CLI init command. It updates the hook settings of "
+            + "supported agents in your account and registers this project. The CLI backs up "
+            + "existing settings. Hooks are not a sandbox and do not replace agent approvals.",
+          facts: [
+            AlertFact(label: "Project", value: directory.lastPathComponent, detail: directory.path)
+          ],
+          action: "Install Agent Hooks", destructive: false, style: .informational, window: nil)
+      else { return }
+      run(
+        arguments: ["init"], directory: directory, operation: "Installing Agent Hooks…",
+        title: "Agent Hook Installation",
+        message:
+          "Review the actual command output below. In Codex, run /hooks once to trust UndoTurn. "
+          + "Restart agent sessions if required. Installation alone does not prove hooks are running."
+      )
+    }
   }
 
   private func check() {

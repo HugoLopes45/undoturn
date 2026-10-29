@@ -39,7 +39,8 @@ import SwiftUI
     window.title = "Storage"
     window.isReleasedWhenClosed = false
     window.delegate = self
-    let hostingController = NSHostingController(rootView: StorageView(store: store))
+    let hostingController = NSHostingController(
+      rootView: StorageView(store: store, window: { [weak self] in self?.window }))
     hostingController.sizingOptions = []
     window.contentViewController = hostingController
     window.setContentSize(NSSize(width: 720, height: 440))

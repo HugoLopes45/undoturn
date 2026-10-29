@@ -7,6 +7,7 @@ struct TimelineView: View {
   let store: LedgerStore
   let agentSetup: AgentSetupController
   @Bindable var selection: TimelineSelection
+  let window: () -> NSWindow?
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.controlActiveState) private var controlActiveState
@@ -149,7 +150,7 @@ struct TimelineView: View {
     }
     .modifier(
       SelectiveRecoveryPresenter(
-        store: store, request: $recoveryRequest, onSuccess: recoverySucceeded,
+        store: store, request: $recoveryRequest, window: window, onSuccess: recoverySucceeded,
         onFailure: { message in showFeedback(.failed(message)) })
     )
     .navigationTitle(windowTitle)

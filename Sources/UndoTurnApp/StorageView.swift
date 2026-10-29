@@ -6,6 +6,7 @@ import UndoTurnLedger
 /// Every recorded project, with the disk space that deleting its history frees.
 struct StorageView: View {
   let store: LedgerStore
+  let window: () -> NSWindow?
 
   @State private var projects: [StoredProject] = []
   @State private var activity: String? = "Measuring stored history…"
@@ -112,38 +113,69 @@ struct StorageView: View {
     case .success(let inventory):
       projects = inventory.sorted { $0.reclaimableBytes > $1.reclaimableBytes }
     case .failure(let error):
-      showError(title: "UndoTurn could not read the stored history.", errors: [error])
+      await showError(title: "UndoTurn could not read the stored history.", errors: [error])
     }
   }
 
   private func requestDelete(_ project: StoredProject) {
-    let turns = counted(project.turnCount, "turn")
-    let size = timelineByteCount(project.reclaimableBytes)
-    guard
-      confirmDeletion(
-        title: "Delete the history of \(projectName(project.root))?",
-        message: "This deletes \(turns) in \(project.root) and frees \(size).",
-        button: "Delete History")
-    else { return }
-    delete([project.root])
+    Task {
+      guard
+        await confirmDeletion(
+          title: "Delete the history of “\(projectName(project.root))”?",
+          message: deletionConsequence,
+          facts: [
+            AlertFact(
+              label: "Project", value: projectName(project.root), detail: project.root),
+            AlertFact(label: "Turns", value: project.turnCount.formatted()),
+            AlertFact(label: "Frees", value: timelineByteCount(project.reclaimableBytes)),
+          ],
+          button: "Delete History")
+      else { return }
+      delete([project.root])
+    }
   }
 
   private func requestDeleteAll() {
     let targets = projects.filter { $0.turnRunning == false }
-    let turns = counted(targets.map(\.turnCount).reduce(0, +), "turn")
-    let projectCount = counted(targets.count, "project")
-    let size = timelineByteCount(targets.map(\.reclaimableBytes).reduce(0, +))
-    var message = "This deletes \(turns) in \(projectCount) and frees \(size)."
+    var facts = [
+      AlertFact(label: "Projects", value: targets.count.formatted()),
+      AlertFact(label: "Turns", value: targets.map(\.turnCount).reduce(0, +).formatted()),
+      AlertFact(
+        label: "Frees", value: timelineByteCount(targets.map(\.reclaimableBytes).reduce(0, +))),
+    ]
     let running = projects.filter(\.turnRunning).map { projectName($0.root) }
     if running.isEmpty == false {
-      let names = running.joined(separator: ", ")
-      message += " UndoTurn keeps the history of \(names) because a turn is running."
+      facts.append(
+        AlertFact(
+          label: "Kept", value: running.joined(separator: ", "), detail: "A turn is running."))
     }
-    guard
-      confirmDeletion(
-        title: "Delete all history?", message: message, button: "Delete All History")
-    else { return }
-    delete(targets.map(\.root))
+    Task {
+      guard
+        await confirmDeletion(
+          title: "Delete all recorded history?", message: deletionConsequence, facts: facts,
+          button: "Delete All History")
+      else { return }
+      delete(targets.map(\.root))
+    }
+  }
+
+  private var deletionConsequence: String {
+    "You can no longer undo or redo these turns, and you cannot undo this deletion. "
+      + "Your project files do not change."
+  }
+
+  private func confirmDeletion(
+    title: String, message: String, facts: [AlertFact], button: String
+  ) async -> Bool {
+    await ConfirmationAlert.confirm(
+      title: title, message: message, facts: facts, action: button, destructive: true,
+      style: .critical, window: window())
+  }
+
+  private func showError(title: String, errors: [StorageError]) async {
+    await ConfirmationAlert.inform(
+      title: title, message: errors.map(errorMessage).joined(separator: "\n"), style: .warning,
+      window: window())
   }
 
   private func delete(_ roots: [String]) {
@@ -154,7 +186,7 @@ struct StorageView: View {
       store.requestReload()
       await reload()
       if errors.isEmpty == false {
-        showError(title: "UndoTurn could not delete the history.", errors: errors)
+        await showError(title: "UndoTurn could not delete the history.", errors: errors)
       }
     }
   }
@@ -188,27 +220,4 @@ private func errorMessage(_ error: StorageError) -> String {
     return "A turn is running in \(projectName(root)). Delete after the agent stops."
   }
   return String(describing: error)
-}
-
-@MainActor private func confirmDeletion(title: String, message: String, button: String) -> Bool {
-  let alert = NSAlert()
-  alert.alertStyle = .critical
-  alert.messageText = title
-  let consequence = "After this, you cannot undo these turns. You cannot undo this deletion."
-  alert.informativeText = "\(message) \(consequence) Your project files do not change."
-  let deleteButton = alert.addButton(withTitle: button)
-  deleteButton.hasDestructiveAction = true
-  // Return must not confirm a destructive move.
-  deleteButton.keyEquivalent = ""
-  alert.addButton(withTitle: "Cancel")
-  return alert.runModal() == .alertFirstButtonReturn
-}
-
-@MainActor private func showError(title: String, errors: [StorageError]) {
-  let alert = NSAlert()
-  alert.alertStyle = .warning
-  alert.messageText = title
-  alert.informativeText = errors.map(errorMessage).joined(separator: "\n")
-  NSApp.activate()
-  alert.runModal()
 }

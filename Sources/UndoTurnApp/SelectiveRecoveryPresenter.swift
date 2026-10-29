@@ -12,6 +12,7 @@ struct RecoveryRequest: Identifiable {
 @MainActor struct SelectiveRecoveryPresenter: ViewModifier {
   let store: LedgerStore
   @Binding var request: RecoveryRequest?
+  let window: () -> NSWindow?
   let onSuccess: (RecoveryRequest, RestoreSummary) -> Void
   let onFailure: (String) -> Void
 
@@ -28,7 +29,7 @@ struct RecoveryRequest: Identifiable {
     switch await request.recovery.perform(store: store, root: request.root, dryRun: dryRun) {
     case .moved(let summary):
       if dryRun {
-        if confirm(request, summary: summary) { await perform(request, dryRun: false) }
+        if await confirm(request, summary: summary) { await perform(request, dryRun: false) }
       } else {
         onSuccess(request, summary)
       }
@@ -42,21 +43,24 @@ struct RecoveryRequest: Identifiable {
     }
   }
 
-  private func confirm(_ request: RecoveryRequest, summary: RestoreSummary) -> Bool {
-    let alert = NSAlert()
-    alert.alertStyle = .warning
-    alert.messageText = request.recovery.action + "?"
-    alert.informativeText =
-      "Project: \(request.root). Planned result: \(summary.detail). "
-      + "\(summary.skipped) files already match. This may replace or remove recorded files. "
-      + "Later edits and unstored files are kept. " + request.recovery.consequence
-      + " Restoring another version later is also conflict-checked, not a guaranteed reversal."
-    let restore = alert.addButton(withTitle: request.recovery.action)
-    restore.hasDestructiveAction = true
-    restore.keyEquivalent = ""
-    alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
-    NSApp.activate()
-    return alert.runModal() == .alertFirstButtonReturn
+  private func confirm(_ request: RecoveryRequest, summary: RestoreSummary) async -> Bool {
+    var facts = [
+      AlertFact(label: "Project", value: projectName(request.root), detail: request.root),
+      AlertFact(label: "Result", value: summary.detail),
+    ]
+    if summary.skipped > 0 {
+      facts.append(
+        AlertFact(
+          label: "Unchanged",
+          value: "\(summary.skipped) \(summary.skipped == 1 ? "file" : "files") already match"))
+    }
+    return await ConfirmationAlert.confirm(
+      title: request.recovery.action + "?",
+      message: "This can replace or remove recorded files. " + request.recovery.consequence
+        + " Later edits and unstored files are kept. A later restore is conflict-checked too, "
+        + "so it is not a guaranteed reversal.",
+      facts: facts, action: request.recovery.action, destructive: true, style: .warning,
+      window: window())
   }
 }
 

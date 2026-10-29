@@ -106,8 +106,11 @@ import UndoTurnLedger
     window.isReleasedWhenClosed = false
     window.delegate = self
     let hostingController = NSHostingController(
-      rootView: TimelineView(store: store, agentSetup: agentSetup, selection: selection)
-        .frame(minWidth: 960, minHeight: 440))
+      rootView: TimelineView(
+        store: store, agentSetup: agentSetup, selection: selection,
+        window: { [weak self] in self?.window }
+      )
+      .frame(minWidth: 960, minHeight: 440))
     hostingController.sizingOptions = [.minSize]
     window.contentViewController = hostingController
     window.setContentSize(NSSize(width: 960, height: 620))
