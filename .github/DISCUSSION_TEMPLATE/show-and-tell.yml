@@ -1,0 +1,13 @@
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: What happened
+      description: A turn that UndoTurn saved, a workflow or a script. Remove private code and paths.
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Agent
+      placeholder: Codex CLI

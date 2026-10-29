@@ -7,6 +7,18 @@ Thank you for your help. This guide explains how to propose a change.
 - For a bug, open an issue with the bug template.
 - For a new feature or a design change, open an issue first. Wait for agreement before you write code.
 
+## How issues are handled
+
+1. A new issue gets `needs-triage`. The maintainer answers within 7 days.
+2. Triage replaces `needs-triage` with one of these labels:
+   - `confirmed`: the bug is reproduced, or the feature is accepted. A pull request is welcome.
+   - `needs-info`: more information is necessary. Without an answer in 30 days, the issue is closed. It can be reopened.
+   - `duplicate`, `invalid` or `wontfix`: the issue is closed with a reason.
+3. `area:*` and `agent:*` labels show the part of UndoTurn and the agent. `good first issue` and `help wanted` mark issues for new contributors.
+4. `data-loss` marks a confirmed loss of user data. It is fixed before all other work. Report such a problem privately first, as described in [SECURITY.md](SECURITY.md).
+
+Questions and open ideas go to [Discussions](https://github.com/HugoLopes45/undoturn/discussions). An accepted idea becomes an issue.
+
 ## Set up
 
 Requirements: macOS 14 or later, Xcode 26 or later (Swift 6.2 or later).

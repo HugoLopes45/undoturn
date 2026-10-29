@@ -1,7 +1,11 @@
 name: Feature request
-description: Suggest a new capability.
-labels: [enhancement]
+description: Suggest a new capability. Open questions go to Discussions, Ideas.
+labels: [enhancement, needs-triage]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Wait for agreement on this issue before you write code (see CONTRIBUTING.md).
   - type: textarea
     id: problem
     attributes:
@@ -13,9 +17,15 @@ body:
     id: proposal
     attributes:
       label: Proposal
-      description: What should UndoTurn do?
+      description: What should UndoTurn do? Show the command, the output or the menu item.
   - type: textarea
     id: workaround
     attributes:
       label: Current workaround
       description: How do you handle this today?
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I can open a pull request after the design is agreed.

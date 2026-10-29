@@ -1,0 +1,39 @@
+name: Agent support
+description: Ask UndoTurn to record a coding agent that it does not support yet.
+title: "Support <agent name>"
+labels: [agent:new, needs-triage]
+body:
+  - type: input
+    id: agent
+    attributes:
+      label: Agent name and version
+      placeholder: Aider 0.86
+    validations:
+      required: true
+  - type: input
+    id: hooks-docs
+    attributes:
+      label: Hook or extension documentation
+      description: Link to the agent's documentation for hooks, plugins or lifecycle events.
+    validations:
+      required: true
+  - type: checkboxes
+    id: events
+    attributes:
+      label: Events the agent exposes
+      description: UndoTurn needs at least a prompt-start and a turn-end event.
+      options:
+        - label: Prompt submitted (turn starts)
+        - label: Turn ends or agent stops
+        - label: Before a tool or shell command
+        - label: After a tool or shell command
+        - label: Waiting for permission or an answer
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Payload examples, configuration file paths, known limits. Remove private data.
+  - type: markdown
+    attributes:
+      value: |
+        Until the agent is supported, `undoturn run -- <command>` records one turn around any command.

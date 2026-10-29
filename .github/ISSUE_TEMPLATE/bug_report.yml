@@ -1,7 +1,20 @@
 name: Bug report
-description: Something does not work as described.
-labels: [bug]
+description: Something does not work as the README or the user guide describes.
+labels: [bug, needs-triage]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the report. Lost or overwritten files and exposed data are security problems: report them privately through the **Security** tab, not here.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched the existing issues and found no duplicate.
+          required: true
+        - label: This report does not involve lost files, overwritten files or exposed data.
+          required: true
   - type: textarea
     id: what
     attributes:
@@ -13,11 +26,19 @@ body:
     id: steps
     attributes:
       label: Steps to reproduce
+      description: Use a disposable project. Do not paste private code or secrets.
       placeholder: |
-        1. undoturn init
-        2. ...
+        1. undoturn init --agent claude
+        2. Prompt: "delete src/old.ts"
+        3. undoturn undo
     validations:
       required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `undoturn doctor`
+      description: Replace your user name and private paths before you paste.
+      render: text
   - type: input
     id: version
     attributes:
@@ -25,22 +46,37 @@ body:
       description: Output of `undoturn --version`.
     validations:
       required: true
-  - type: input
-    id: macos
+  - type: dropdown
+    id: install
     attributes:
-      label: macOS version
+      label: Installed from
+      options: [Source build (swift build), Local DMG (package-app.sh), Release DMG]
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where
+      options: [CLI, Menu bar app, Background service, MCP server, Hook installation]
+      multiple: true
     validations:
       required: true
   - type: dropdown
     id: agent
     attributes:
       label: Agent
-      options: [Claude Code, Codex CLI, Gemini CLI, Cursor CLI, Copilot CLI, Droid, Devin CLI, OpenCode, Pi, Oh My Pi, Other]
+      options: [Claude Code, Codex CLI, Gemini CLI, Cursor CLI, GitHub Copilot CLI, Factory Droid, Devin CLI, OpenCode, Pi, Oh My Pi, undoturn run, Not agent-related]
     validations:
       required: true
-  - type: checkboxes
-    id: dataloss
+  - type: input
+    id: agent-version
     attributes:
-      label: Data loss
-      options:
-        - label: I lost file contents because of this bug.
+      label: Agent version
+      placeholder: claude 2.1.0
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and chip
+      placeholder: macOS 15.4, Apple M1
+    validations:
+      required: true
