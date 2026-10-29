@@ -120,7 +120,7 @@ code.path { white-space: normal; }
 .nav { display: flex; align-items: center; gap: 24px; min-height: 52px; }
 .wordmark { display: inline-flex; align-items: center; gap: 10px; margin-right: auto; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none; }
 .wordmark img { width: 30px; height: 30px; }
-.nav__links { display: none; gap: 24px; font-size: 16px; }
+.nav__links { display: none; gap: 24px; font-size: 16px; white-space: nowrap; }
 .nav__links a { text-decoration-line: underline; }
 .hero__title { font-size: clamp(2.5rem, 9.4vw, 4.75rem); line-height: 1.02; letter-spacing: -0.035em; font-weight: 500; }
 .lines .line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
@@ -147,8 +147,10 @@ html:not(.js) .reel__window { overflow-x: auto; }
 .hero__act { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
 .hero__sentence { max-width: 30ch; }
 
-@media (min-width: 48em) {
+@media (min-width: 52em) {
   .nav__links { display: flex; }
+}
+@media (min-width: 48em) {
   .reel { --sliver: 32px; --gap: 16px; }
 }
 @media (min-width: 75em) {
@@ -475,6 +477,7 @@ html:not(.js) .reel__window { overflow-x: auto; }
         <li><a class="link" href="#commands">Commands</a></li>
         <li><a class="link" href="#faq">FAQ</a></li>
         <li><a class="link" href="guide.html">User guide</a></li>
+        <li><a class="link" href="https://github.com/HugoLopes45/undoturn">GitHub</a></li>
       </ul>
       <a class="button button--small" href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">Download for Mac</a>
     </nav>
