@@ -1,0 +1,67 @@
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/index.html
+      - docs/guide.html
+      - docs/guide.css
+      - docs/guide.js
+      - docs/images/**
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Copy only the site files
+        run: |
+          mkdir -p _site
+          cp docs/index.html docs/guide.html docs/guide.css docs/guide.js _site/
+          cp -R docs/images _site/images
+      - name: Check local links and assets
+        run: |
+          cd _site
+          status=0
+          for page in index.html guide.html; do
+            grep -oE '(href|src)="[^"#:]+"' "$page" | sed -E 's/^[a-z]+="([^"]*)"$/\1/' | sort -u >"$RUNNER_TEMP/refs"
+            while read -r ref; do
+              case "$ref" in ./) continue ;; esac
+              [ -e "$ref" ] || { echo "::error file=docs/$page::missing $ref"; status=1; }
+            done <"$RUNNER_TEMP/refs"
+          done
+          exit "$status"
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pages: write # publish the site
+      id-token: write # prove the deployment comes from this workflow
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

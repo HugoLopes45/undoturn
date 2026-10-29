@@ -10,6 +10,8 @@
 <meta property="og:title" content="UndoTurn: local history for coding agents">
 <meta property="og:description" content="Undo for coding agents on macOS. One command. One click.">
 <meta property="og:type" content="website">
+<link rel="canonical" href="https://hugolopes45.github.io/undoturn/">
+<meta property="og:url" content="https://hugolopes45.github.io/undoturn/">
 <meta property="og:image" content="https://hugolopes45.github.io/undoturn/images/timeline-light.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="images/icon.svg" type="image/svg+xml">
@@ -66,6 +68,8 @@ p { max-width: 62ch; text-wrap: pretty; }
 pre, code, kbd { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.89em; }
 :where(p, figcaption) code { white-space: nowrap; }
 code.path { white-space: normal; }
+.skip { position: absolute; top: 8px; left: 50%; z-index: 10; padding: 8px 12px; border-radius: var(--radius); background: var(--ink); color: var(--bg); text-decoration: none; transform: translate(-50%, -200%); }
+.skip:focus { transform: translate(-50%, 0); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* layout */
@@ -174,6 +178,7 @@ html:not(.js) .reel__window { overflow-x: auto; }
 [data-ui] .row .counts { font-variant-numeric: tabular-nums; white-space: nowrap; }
 [data-ui] .row .age { text-align: right; color: #6a6a6f; font-variant-numeric: tabular-nums; }
 [data-ui] .row.is-undone .prompt, [data-ui] .row.is-undone .counts { color: #6a6a6f; }
+[data-ui] .row.is-sel .num, [data-ui] .row.is-sel .age, [data-ui] .row.is-sel.is-undone .prompt, [data-ui] .row.is-sel.is-undone .counts { color: #55555a; }
 [data-ui] .rail { position: relative; align-self: stretch; }
 [data-ui] .rail::before { content: ""; position: absolute; left: 0.95em; top: 0; bottom: 0; border-left: 1px solid #d0d0d4; }
 [data-ui] .row:first-child .rail::before, [data-ui] .row.is-hidden:first-child + .row .rail::before { top: 50%; }
@@ -182,6 +187,7 @@ html:not(.js) .reel__window { overflow-x: auto; }
 [data-ui] .caret { position: absolute; left: 0.25em; top: 0.3em; width: 0.22em; height: 2.15em; padding-block: 0.45em; background-clip: content-box; background-color: #0063e1; border-radius: 2px; transform: translateY(calc(var(--caret, 0) * 2.15em)); transition: transform 420ms var(--ease-out); }
 [data-ui] .add { color: #23863b; }
 [data-ui] .del { color: #d70015; }
+[data-ui] .row.is-sel .del { color: #b8000f; }
 [data-ui] .mod { color: #b25000; }
 [data-ui] .detail { flex: 1; display: flex; flex-direction: column; gap: 0.45em; padding: 0.55em 0.9em 0.8em; border-top: 1px solid rgba(0, 0, 0, 0.08); min-height: 0; }
 [data-ui] .banner { display: flex; align-items: baseline; justify-content: space-between; gap: 1em; min-height: 1.9em; padding: 0.3em 0.6em; border-radius: 6px; background: #f2f2f4; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -440,6 +446,7 @@ html:not(.js) .reel__window { overflow-x: auto; }
 </style>
 </head>
 <body>
+<a class="skip" href="#content">Skip to content</a>
 
 <header class="hero scene" id="top">
   <div class="hero__stage">
@@ -546,7 +553,7 @@ restored: tests/items.test.ts
   </div>
 </header>
 
-<main>
+<main id="content">
 
 <section class="section how" id="how" aria-labelledby="how-h">
   <div class="wrap grid how__grid">
