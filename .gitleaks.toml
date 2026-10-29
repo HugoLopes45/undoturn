@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic secrets that test redaction"
+paths = ['''^Tests/UndoTurnCoreTests/HistoryRecordTests\.swift$''']

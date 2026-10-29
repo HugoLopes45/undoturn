@@ -4,22 +4,93 @@ on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  ACTIONLINT_VERSION: 1.7.12
+  ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+  GITLEAKS_VERSION: 8.30.1
+  GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+  # docs/guide.html is committed; this version must match the maintainer's pandoc.
+  PANDOC_VERSION: 3.12.1
+  PANDOC_SHA256: b4217ac7c54067c442f9d4cd38bcd0c184a43f3e7053431a12263a6f92a33ba2
 
 jobs:
-  test:
-    runs-on: macos-26
-    timeout-minutes: 20
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install pinned tools
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          cd "$RUNNER_TEMP"
+          curl -fsSLo actionlint.tgz "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "$ACTIONLINT_SHA256  actionlint.tgz" | sha256sum -c -
+          tar -xzf actionlint.tgz -C bin actionlint
+          curl -fsSLo gitleaks.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "$GITLEAKS_SHA256  gitleaks.tgz" | sha256sum -c -
+          tar -xzf gitleaks.tgz -C bin gitleaks
+          curl -fsSLo pandoc.deb "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-amd64.deb"
+          echo "$PANDOC_SHA256  pandoc.deb" | sha256sum -c -
+          sudo dpkg -i pandoc.deb
+          echo "$RUNNER_TEMP/bin" >>"$GITHUB_PATH"
+      - name: Workflows
+        run: actionlint -color
+      - name: Shell scripts
+        run: shellcheck scripts/*.sh
+      - name: Secrets in history
+        run: gitleaks git --no-banner --redact --verbose .
+      - name: User guide HTML is up to date
+        run: |
+          sh scripts/build-docs.sh
+          git diff --exit-code -- docs/guide.html || {
+            echo "::error file=docs/guide.html::Run sh scripts/build-docs.sh and commit docs/guide.html."
+            exit 1
+          }
+
+  workflow-security:
+    name: Workflow security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+        with:
+          advanced-security: false
+          persona: pedantic
+
+  test:
+    name: Build and test
+    runs-on: macos-26
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Toolchain
-        run: swift --version
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
       - name: Format
         run: swift format lint --strict --recursive Sources Tests Package.swift
       - name: Build
@@ -30,3 +101,36 @@ jobs:
           ! otool -L .build/release/undoturn | grep -q Foundation
       - name: Test
         run: swift test
+      - name: Package the universal CLI
+        run: sh scripts/build-release.sh
+      - name: Package the app
+        run: |
+          sh scripts/build-app.sh .build/ci/UndoTurn.app
+          lipo -archs .build/ci/UndoTurn.app/Contents/MacOS/UndoTurn
+          ditto -c -k --keepParent .build/ci/UndoTurn.app .build/ci/UndoTurn-unsigned.zip
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: undoturn-${{ github.sha }}
+          path: |
+            .build/dist/*.tar.gz
+            .build/dist/*.tar.gz.sha256
+            .build/ci/UndoTurn-unsigned.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  ci:
+    name: CI
+    if: always()
+    needs: [lint, workflow-security, test]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: All jobs passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "$RESULTS"
+          for result in $RESULTS; do
+            [ "$result" = success ] || exit 1
+          done

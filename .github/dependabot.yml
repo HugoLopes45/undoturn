@@ -4,3 +4,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
+    labels: [dependencies, area:ci]
+    commit-message:
+      prefix: Update

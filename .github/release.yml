@@ -1,0 +1,18 @@
+changelog:
+  exclude:
+    labels: [duplicate, invalid, wontfix]
+  categories:
+    - title: Data loss fixes
+      labels: [data-loss]
+    - title: New features
+      labels: [enhancement, agent:new]
+    - title: Bug fixes
+      labels: [bug]
+    - title: Performance
+      labels: [performance]
+    - title: Documentation
+      labels: [documentation]
+    - title: Dependencies and CI
+      labels: [dependencies, area:ci]
+    - title: Other changes
+      labels: ["*"]
