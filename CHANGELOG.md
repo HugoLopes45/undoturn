@@ -12,6 +12,10 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 - About UndoTurn names the author, Hugo Lopes, and links to his GitHub account.
 
+### Fixed
+
+- A running turn shows its newest shell command again. A precommand checkpoint in a later second hid it from `undoturn list` and the app.
+
 ## [0.1.0] - 2026-10-29
 
 ### Added

@@ -862,6 +862,22 @@ extension SessionTests {
     #expect(try FileSystem.readFile(root + "/a.txt") == Array("between turns".utf8))
   }
 
+  @Test func aPreCommandCheckpointKeepsTheRunningTurnsNewestStep() throws {
+    let temporary = try TemporaryDirectory()
+    let environment = try makeEnvironment(temporary.path)
+    let root = try makeProject(temporary.path)
+    let conversation = Conversation(agent: "claude", prompt: "run the tests")
+    let kinds: [HookKind] = [.start, .toolUse(.shell(command: "npm test"))]
+    for (offset, kind) in kinds.enumerated() {
+      try Session.handle(
+        kind: kind, cwd: root, conversation: conversation, environment: environment,
+        time: Int64(offset + 1))
+    }
+    let session = try Session.open(cwd: root, environment: environment)
+    _ = try session.checkpoint(time: 3)
+    #expect(try session.state(time: 4).live?.tool?.action == .shell("npm test"))
+  }
+
   @Test func checkpointsRebaseOutsideWatchesWithoutDroppingThem() throws {
     let temporary = try TemporaryDirectory()
     let environment = try makeEnvironment(temporary.path)
