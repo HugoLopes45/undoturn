@@ -741,7 +741,7 @@ Results use `schemaVersion: 1`. Recovery reports include `from`, `to`, `files` (
 
 | Symptom | What to check or do |
 |---|---|
-| App opens but there is no Dock icon | Expected while the timeline is closed: UndoTurn is a menu bar app. Reopen `/Applications/UndoTurn.app` to show the timeline. Make room near the notch or check menu bar-hiding utilities. |
+| App opens but there is no Dock icon | Expected while the timeline and storage windows are closed: UndoTurn is a menu bar app. Reopen `/Applications/UndoTurn.app` to show the timeline. Make room near the notch or check menu bar-hiding utilities. |
 | `undoturn: command not found` | Choose **Install Command-Line Tools…** and select a writable folder already on your shell's `PATH`. The app does not change `PATH`. Alternatively, use `/Applications/UndoTurn.app/Contents/Helpers/undoturn` by its quoted absolute path. |
 | macOS blocks the app | Follow the [trusted-build Gatekeeper workflow](#gatekeeper-and-trusted-builds); do not disable security or remove quarantine indiscriminately. |
 | No project or no turns | Check the intended store and `-C` folder, [refused roots](#how-undoturn-finds-the-project), pause state, and `doctor <agent>`. No-change turns produce no node. Verify the actual agent with a harmless edit. |

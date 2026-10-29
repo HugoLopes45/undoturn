@@ -75,7 +75,7 @@ import UndoTurnLedger
       window = makeWindow()
       self.window = window
     }
-    NSApp.setActivationPolicy(.regular)
+    DockPresence.windowWillShow()
     NSApp.activate()
     // makeKeyAndOrderFront leaves a minimized window in the Dock.
     if window.isMiniaturized { window.deminiaturize(nil) }
@@ -89,7 +89,9 @@ import UndoTurnLedger
 
   func windowWillClose(_ notification: Notification) {
     window = nil
-    NSApp.setActivationPolicy(.accessory)
+    if let closing = notification.object as? NSWindow {
+      DockPresence.windowWillClose(closing)
+    }
     DispatchQueue.main.async {
       _ = malloc_zone_pressure_relief(nil, 0)
     }

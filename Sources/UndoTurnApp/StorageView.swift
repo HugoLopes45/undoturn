@@ -12,6 +12,11 @@ struct StorageView: View {
 
   var body: some View {
     VStack(spacing: 0) {
+      BrandLockup()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+      Divider()
       List(projects, id: \.root) { project in
         row(project)
       }

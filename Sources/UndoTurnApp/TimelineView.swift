@@ -27,6 +27,10 @@ struct TimelineView: View {
     project.flatMap { store.state(root: $0.root) }
   }
 
+  private var showsNoProjects: Bool {
+    store.projects.isEmpty && (selection.root.map { store.project(root: $0) == nil } ?? true)
+  }
+
   private var hasPendingTurn: Bool {
     state?.pendingTurn != nil
   }
@@ -101,7 +105,7 @@ struct TimelineView: View {
     let now = currentTime
 
     Group {
-      if store.projects.isEmpty, selection.root.map({ store.project(root: $0) == nil }) ?? true {
+      if showsNoProjects {
         VStack(spacing: 0) {
           loadErrorBanner
           HookFailureBanner(failures: store.hookFailures)
@@ -140,6 +144,7 @@ struct TimelineView: View {
         .animation(reduceMotion ? nil : .snappy(duration: 0.3), value: moveFeedback?.id)
     }
     .toolbar {
+      brandToolbar
       moveToolbar
     }
     .modifier(
@@ -190,6 +195,13 @@ struct TimelineView: View {
       }
     }
     .listStyle(.sidebar)
+    .safeAreaInset(edge: .top, spacing: 0) {
+      BrandLockup()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 18)
+        .padding(.top, 4)
+        .padding(.bottom, 6)
+    }
     .safeAreaInset(edge: .bottom, spacing: 0) {
       if store.paused {
         VStack(alignment: .leading, spacing: 6) {
@@ -204,6 +216,24 @@ struct TimelineView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
       }
+    }
+  }
+
+  /// The sidebar carries the brand; the toolbar takes it over while no sidebar is shown.
+  @ToolbarContentBuilder
+  private var brandToolbar: some ToolbarContent {
+    if showsNoProjects || columnVisibility != .all {
+      if #available(macOS 26, *) {
+        brandToolbarItem.sharedBackgroundVisibility(.hidden)
+      } else {
+        brandToolbarItem
+      }
+    }
+  }
+
+  private var brandToolbarItem: some ToolbarContent {
+    ToolbarItem(placement: .navigation) {
+      BrandLockup()
     }
   }
 

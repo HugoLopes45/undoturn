@@ -94,6 +94,12 @@ import UndoTurnLedger
     menuActionTargets.removeAll()
     moreActionTargets.removeAll()
     moreMenu = nil
+    let brandItem = NSMenuItem()
+    brandItem.view = .brandLockup(
+      iconSize: 18, showsVersion: true,
+      padding: NSEdgeInsets(top: 4, left: 12, bottom: 4, right: 12))
+    menu.addItem(brandItem)
+    menu.addItem(.separator())
     if store.paused {
       let pausedItem = NSMenuItem(
         title: "Recording paused", action: nil, keyEquivalent: "")

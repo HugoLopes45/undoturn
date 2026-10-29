@@ -14,6 +14,7 @@ import SwiftUI
   func show() {
     let window = self.window ?? makeWindow()
     self.window = window
+    DockPresence.windowWillShow()
     NSApp.activate()
     // makeKeyAndOrderFront leaves a minimized window in the Dock.
     if window.isMiniaturized {
@@ -24,6 +25,9 @@ import SwiftUI
 
   func windowWillClose(_ notification: Notification) {
     window = nil
+    if let closing = notification.object as? NSWindow {
+      DockPresence.windowWillClose(closing)
+    }
   }
 
   private func makeWindow() -> NSWindow {

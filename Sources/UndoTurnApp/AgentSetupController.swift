@@ -36,6 +36,7 @@ import Observation
     panel.canCreateDirectories = true
     panel.showsHiddenFiles = true
     panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+    showBrand(in: panel)
     NSApp.activate()
     guard panel.runModal() == .OK, let directory = panel.url else { return }
     do {
@@ -100,8 +101,15 @@ import Observation
     if let root = store.projects.first?.root {
       panel.directoryURL = URL(fileURLWithPath: root, isDirectory: true)
     }
+    showBrand(in: panel)
     NSApp.activate()
     return panel.runModal() == .OK ? panel.url : nil
+  }
+
+  private func showBrand(in panel: NSOpenPanel) {
+    panel.accessoryView = .brandLockup(
+      iconSize: 24, padding: NSEdgeInsets(top: 8, left: 16, bottom: 8, right: 16))
+    panel.isAccessoryViewDisclosed = true
   }
 
   private func run(
