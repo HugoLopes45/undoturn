@@ -486,7 +486,7 @@ html:not(.js) .reel__window { overflow-x: auto; }
               </ol>
               <div class="detail">
                 <p class="banner" role="status" aria-live="polite"></p>
-                <p class="meta">#2 &middot; <span data-state>Current</span> &middot; Claude Code &middot; just now</p>
+                <p class="meta">Claude Code &middot; 1m 12s &middot; Oct 29, 2026 at 9:41 AM &middot; #2 &middot; <span data-state>Current</span></p>
                 <p class="files-h">Files &middot; 5</p>
                 <ul class="files">
                   <li><b class="D">D</b><code>src/health.ts</code></li>
@@ -604,11 +604,11 @@ restored: tests/items.test.ts
                 <p class="files-h">Move the API client into src/api</p>
                 <p class="meta">Claude Code &middot; started just now</p>
                 <dl class="grid2" data-s-latest style="margin-top:0.5em"><dt>Latest step</dt><dd><code data-s-latest-code>$ mv src/client.ts src/api/client.ts</code></dd></dl>
-                <p class="note" style="margin-top:0.5em">UndoTurn records this turn when the agent stops. Its files show here then.</p>
+                <p class="note" style="margin-top:0.5em">UndoTurn records the shared interval when all active participants stop. Files are not attributed per session.</p>
               </div>
               <div data-s-undone-detail class="is-hidden">
                 <p class="files-h">Move the API client into src/api</p>
-                <p class="meta">#6 &middot; Undone &middot; Claude Code &middot; just now</p>
+                <p class="meta">Claude Code &middot; 48s &middot; Oct 29, 2026 at 9:41 AM &middot; #6 &middot; Undone</p>
                 <ul class="files" style="margin-top:0.5em">
                   <li><b class="A">A</b><code>src/api/client.ts</code></li>
                   <li><b class="A">A</b><code>src/api/index.ts</code></li>
@@ -676,7 +676,7 @@ restored: tests/items.test.ts
               </div>
               <span class="n-act">Undo #2</span>
             </div>
-            <figcaption><strong>An alert on mass deletes</strong>When a turn deletes 50 files, or 3 files and a quarter of the project, a notification offers the undo.</figcaption>
+            <figcaption><strong>An alert on mass deletes</strong>When a turn deletes 50 files or more, or at least 3 files and a quarter of the project, a notification offers the undo. The app must be running.</figcaption>
           </figure>
         </li>
         <li class="panel">
@@ -740,7 +740,7 @@ restored: src/List.tsx
     </div>
 
     <div class="notes notes--r">
-      <button type="button" class="note-btn" data-part="undo" style="--i:1" data-reveal><strong>Undo per project</strong><span>Each project has its own Undo and Redo. Under each, the turns and files it changes, before you click.</span></button>
+      <button type="button" class="note-btn" data-part="undo" style="--i:1" data-reveal><strong>Undo per project</strong><span>Each project has its own Undo and Redo. Under each, how many turns and files it changes, before you click.</span></button>
       <button type="button" class="note-btn" data-part="pause" style="--i:2" data-reveal><strong>Pause Recording</strong><span>Stop recording new turns for a while. Open at Login keeps UndoTurn in the menu bar.</span></button>
     </div>
   </div>
@@ -757,7 +757,7 @@ restored: src/List.tsx
       <button type="button" class="tab" role="tab" id="tab-back" aria-selected="true" aria-controls="panel-back"><span class="tab__label">Go back</span><span class="tab__count">6 commands</span></button>
       <button type="button" class="tab" role="tab" id="tab-look" aria-selected="false" aria-controls="panel-look" tabindex="-1"><span class="tab__label">Look closer</span><span class="tab__count">3 commands</span></button>
       <button type="button" class="tab" role="tab" id="tab-setup" aria-selected="false" aria-controls="panel-setup" tabindex="-1"><span class="tab__label">Set up</span><span class="tab__count">4 commands</span></button>
-      <button type="button" class="tab" role="tab" id="tab-rest" aria-selected="false" aria-controls="panel-rest" tabindex="-1"><span class="tab__label">The rest</span><span class="tab__count">3 commands</span></button>
+      <button type="button" class="tab" role="tab" id="tab-rest" aria-selected="false" aria-controls="panel-rest" tabindex="-1"><span class="tab__label">The rest</span><span class="tab__count">4 commands</span></button>
     </div>
 
     <div class="bands" role="tabpanel" id="panel-back" aria-labelledby="tab-back" data-reveal style="--i:3">
@@ -787,6 +787,7 @@ restored: src/List.tsx
       <div class="band"><code>undoturn run -- make build</code><p>Record one turn around any command.</p><p class="band__app">Terminal only</p></div>
       <div class="band"><code>undoturn pause</code><p>Stop recording. <code>undoturn resume</code> starts it again.</p><p class="band__app">Pause Recording</p></div>
       <div class="band"><code>undoturn gc</code><p>Remove stored versions of undone turns and other branches after 30 days, or the oldest ones above 5 GiB.</p><p class="band__app">Terminal only</p></div>
+      <div class="band"><code>undoturn mcp</code><p>Let the agent list, diff, undo, redo, go to and revert turns as MCP tools.</p><p class="band__app">Terminal only</p></div>
     </div>
   </div>
 </section>
@@ -795,11 +796,11 @@ restored: src/List.tsx
   <div class="wrap grid">
     <h2 class="stats__h head" id="stats-h"><span data-reveal>Small, fast,</span><span data-reveal style="--i:1">and quiet.</span></h2>
     <dl class="figs">
-      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:1">20<span class="fig__u">ms</span></dt><dd class="fig__c" data-reveal style="--i:2">earlier Claude Code/Codex hook median with the optional FSEvents service, on a 20,000-file project and M1 Max. This does not measure the new integrations.</dd></div>
-      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:2">35<span class="fig__u">ms</span></dt><dd class="fig__c" data-reveal style="--i:3">earlier hook median without the service, on the same project. Shared recording and pre-command checkpoints have not been benchmarked.</dd></div>
-      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:3">13<span class="fig__u">MB</span></dt><dd class="fig__c" data-reveal style="--i:4">earlier idle app measurement: 12 to 13 MB. The new timeline and recording features have not been remeasured.</dd></div>
+      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:1">28<span class="fig__u">ms</span></dt><dd class="fig__c" data-reveal style="--i:2">median Claude Code hook time with the optional background service: 28 ms at the prompt, 22 ms at the stop. 20,000-file project, M1 Max.</dd></div>
+      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:2">35<span class="fig__u">ms</span></dt><dd class="fig__c" data-reveal style="--i:3">median hook time without the service, on the same project. Other agents and pre-command checkpoints are not benchmarked.</dd></div>
+      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:3">12<span class="fig__u">MB</span></dt><dd class="fig__c" data-reveal style="--i:4">memory footprint of the menu bar app after launch. An open timeline uses more.</dd></div>
       <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:4">10</dt><dd class="fig__c" data-reveal style="--i:5">agent CLIs in one history: Claude Code, Codex, Gemini, Cursor, Copilot, Droid, Devin, OpenCode, Pi and Oh My Pi.</dd></div>
-      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:5">0</dt><dd class="fig__c" data-reveal style="--i:6">lines of network code. No account, no telemetry. The history stays on your Mac.</dd></div>
+      <div class="fig"><dt class="fig__n" data-reveal="fig" style="--i:5">0</dt><dd class="fig__c" data-reveal style="--i:6">network connections. No account, no telemetry. The history stays on your Mac.</dd></div>
     </dl>
   </div>
 </section>
@@ -808,7 +809,7 @@ restored: src/List.tsx
   <div class="wrap grid cta__grid">
     <div class="cta__tile" data-reveal>
       <h2 id="cta-h">Download UndoTurn</h2>
-      <p>UndoTurn needs macOS 14 or later. <a class="link-plain" href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">Download the app</a>, universal, signed and notarized, or the CLI only from the <a class="link-plain" href="https://github.com/HugoLopes45/undoturn/releases/latest">latest release</a>. To build from source instead, clone the repository. Then run <code>undoturn init</code> once in your project. It adds the hooks to all supported agents and registers the project. <code>undoturn uninstall</code> removes the hooks. The history stays.</p>
+      <p>UndoTurn needs macOS 14 or later. <a class="link-plain" href="https://github.com/HugoLopes45/undoturn/releases/latest/download/UndoTurn.dmg">Download the app</a>, universal, signed and notarized, or the CLI only from the <a class="link-plain" href="https://github.com/HugoLopes45/undoturn/releases/latest">latest release</a>. To build from source instead, clone the repository. Then, in the app, choose <strong>Install Agent Hooks…</strong> in the menu bar and select your project. With the CLI, run <code>undoturn init</code> in your project. Both add the hooks to all supported agents and register the project. In Codex, run <code>/hooks</code> once to trust the hook. <code>undoturn uninstall</code> removes the hooks. The history stays.</p>
       <div class="cta__field">
         <code id="clone-cmd">git clone https://github.com/<wbr>HugoLopes45/<wbr>undoturn.git</code>
         <button type="button" class="cta__copy" data-copy="#clone-cmd">Copy</button>
@@ -835,7 +836,7 @@ restored: src/List.tsx
       </div>
       <div class="faq__item">
         <h3 data-reveal style="--i:3"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a3">Does my code leave my Mac?</button></h3>
-        <div class="faq__a" id="a3"><p>No. UndoTurn has no network code. The history is in <code class="path">~/Library/Application Support/UndoTurn</code>, and only your user can read it.</p></div>
+        <div class="faq__a" id="a3"><p>No. UndoTurn makes no network connections. If you connect <code>undoturn mcp</code> to an agent, that agent receives the history it asks for. The history is in <code class="path">~/Library/Application Support/UndoTurn</code>, and only your user can read it.</p></div>
       </div>
       <div class="faq__item">
         <h3 data-reveal style="--i:4"><button type="button" class="faq__q" aria-expanded="true" aria-controls="a4">Does it store my secrets?</button></h3>

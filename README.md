@@ -124,7 +124,7 @@ Undo and redo for each project, recent turns, storage, hook setup and Pause Reco
 - **An alert on mass deletes.** If a turn removes 50 files or more, or at least 3 files and a quarter of the project, a notification offers an undo.
 - **Crash recovery.** A durable journal resumes interrupted recovery and preserves completed operations. File changes and progress records are not atomic against other writers.
 - **Targeted prevention.** Claude Code, Codex, Gemini and Cursor pre-tool hooks reject recognized broad deletions, gate destructive Git operations, and checkpoint recognized risky commands. This is not a sandbox; `.git` remains excluded.
-- **Fast.** Existing measurement: each Claude/Codex hook adds about 20 ms with the background service and about 35 ms without it (median, 20,000-file project, M1 Max). This does not measure the new integrations, shared recording, or pre-command checkpoints.
+- **Fast.** Each Claude Code hook adds a median of 22 to 28 ms with the background service and 35 ms without it (20,000-file project, M1 Max). Other agents and pre-command checkpoints are not benchmarked.
 - **Small on disk.** UndoTurn stores each file version as an APFS clone. A clone uses almost no space until the original file changes.
 - **Agents can undo too.** `undoturn mcp` serves list, diff, undo, redo, goto and revert over MCP.
 
@@ -318,7 +318,7 @@ Add `--json` to `list`, `show`, `diff`, `undo`, `redo`, `goto`, `revert`, `resto
 No. Git keeps the history that you decide to keep. UndoTurn protects the minutes between two commits, when an agent changes many files at once.
 
 **Does my code leave my Mac?**
-No. UndoTurn has no network code. The history is in `~/Library/Application Support/UndoTurn`, and only your user can read it.
+No. UndoTurn makes no network connections. If you connect `undoturn mcp` to an agent, that agent receives the history it asks for. The history is in `~/Library/Application Support/UndoTurn`, and only your user can read it.
 
 **Does it store my secrets?**
 Yes, unless you exclude them. UndoTurn records `.env*` files even when `.gitignore` ignores them, so that an undo can restore them. File copies are not redacted. They stay on your Mac with mode `0600`. To keep them out, list them in `.undoturnignore`. The [threat model](docs/THREAT-MODEL.md) tells how to remove versions already stored.
@@ -327,7 +327,7 @@ Yes, unless you exclude them. UndoTurn records `.env*` files even when `.gitigno
 Each file version is an APFS clone, which uses almost no space until the original file changes. `undoturn gc` removes the stored versions of undone turns and other branches after 30 days. It also removes the oldest of them when the store is larger than 5 GiB. In the menu bar app, **Manage Storage…** estimates the space that deleting each project's history can free, and deletes one history or all of them.
 
 **Does it slow down my agent?**
-Earlier measurements on a 20,000-file project and an M1 Max: about 20 ms per Claude Code or Codex hook with the background service, and about 35 ms without it. A turn runs two hooks: one at the prompt and one at the stop. Newer integrations and shared recording have not been measured.
+On a 20,000-file project and an M1 Max, the median Claude Code hook time is 28 ms at the prompt and 22 ms at the stop with the background service, and 35 ms without it. A turn runs these two hooks. Other agents and pre-command checkpoints are not benchmarked.
 
 **What if I edit files while the agent works?**
 A change made during a turn belongs to that turn. An undo of that turn also undoes your change. A change made after the turn is safe: undo keeps it.
@@ -337,7 +337,7 @@ No. UndoTurn is a recovery tool. It can not stop an agent, and its store is on t
 
 ## Privacy
 
-UndoTurn has no network code, no account and no telemetry. The history stays in `~/Library/Application Support/UndoTurn`, readable only by your user. UndoTurn never writes to `.git` and never makes commits.
+UndoTurn makes no network connections and has no account and no telemetry. The history stays in `~/Library/Application Support/UndoTurn`, readable only by your user. UndoTurn never writes to `.git` and never makes commits.
 
 ## Contributing
 
