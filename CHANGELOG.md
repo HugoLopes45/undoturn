@@ -62,3 +62,6 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Name the source project and its full path in recovery reports and accessibility announcements, including results that arrive after switching projects.
 
 Malformed hook commands from the previous quoting bug are not automatically removed. Remove those invalid entries manually before reinstalling hooks.
+
+[unreleased]: https://github.com/HugoLopes45/undoturn/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/HugoLopes45/undoturn/releases/tag/v0.1.0

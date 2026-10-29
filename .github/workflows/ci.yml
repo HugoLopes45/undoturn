@@ -51,6 +51,10 @@ jobs:
         run: actionlint -color
       - name: Shell scripts
         run: shellcheck scripts/*.sh
+      - name: Changelog format
+        run: |
+          sh scripts/test-changelog.sh
+          sh scripts/changelog.sh check
       - name: Secrets in history
         run: gitleaks git --no-banner --redact --verbose .
       - name: User guide HTML is up to date

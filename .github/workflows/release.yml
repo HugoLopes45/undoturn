@@ -25,15 +25,19 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - name: Tag matches the version and the changelog
+      - name: Tag matches main, the version and the changelog
         id: version
         env:
           TAG: ${{ github.ref_name }}
         run: |
           version=$(sed -n 's/.*current = "\([^"]*\)".*/\1/p' Sources/UndoTurnCore/UndoTurnVersion.swift)
           [ "$TAG" = "v$version" ] || { echo "::error::tag $TAG does not match version $version"; exit 1; }
-          grep -q "^## \[$version\]" CHANGELOG.md || { echo "::error::CHANGELOG.md has no [$version] section"; exit 1; }
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::tag $TAG is not on main"; exit 1; }
+          sh scripts/changelog.sh check
+          today=$(date -u +%F)
+          grep -q "^## \[$version\] - $today\$" CHANGELOG.md || { echo "::error::CHANGELOG.md has no [$version] section dated $today (UTC)"; exit 1; }
           echo "version=$version" >>"$GITHUB_OUTPUT"
       - name: Test
         run: swift test
@@ -78,7 +82,7 @@ jobs:
           TAG: ${{ github.ref_name }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          awk -v v="$VERSION" '$0 ~ "^## \\[" v "\\]" { on = 1; next } on && /^## / { exit } on' CHANGELOG.md >"$RUNNER_TEMP/notes.md"
+          sh scripts/changelog.sh notes "$VERSION" >"$RUNNER_TEMP/notes.md"
           dist=".build/release-artifacts/$VERSION"
           # Stable names keep the README links to releases/latest/download/ valid for every version.
           cp "$dist/UndoTurn-$VERSION.dmg" "$dist/UndoTurn.dmg"

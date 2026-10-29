@@ -1,0 +1,39 @@
+name: Changelog
+
+# A pull request that changes the product must add a CHANGELOG.md entry under Unreleased.
+# The skip-changelog label exempts changes that users cannot notice.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  merge_group:
+
+permissions: {}
+
+concurrency:
+  group: changelog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  entry:
+    name: Changelog entry
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: CHANGELOG.md changes with the product
+        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE...$HEAD")
+          printf '%s\n' "$changed" | grep -q -e '^Sources/' -e '^packaging/' || exit 0
+          printf '%s\n' "$changed" | grep -qx CHANGELOG.md && exit 0
+          echo "::error file=CHANGELOG.md::Add an entry under [Unreleased], or ask a maintainer for the skip-changelog label."
+          exit 1
